@@ -18,7 +18,7 @@ def PoseDetection():
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         results = vid_pose.process(imgRGB)
 
-        locations = np.array(results.pose_landmarks)
+        landmarks = results.pose_landmarks
 
         annotated_image = img.copy()
 
@@ -31,7 +31,7 @@ def PoseDetection():
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    return results.pose_landmarks
+    return landmarks
 
 
 # Activate Video / Webcam
@@ -46,13 +46,25 @@ mp_drawing_styles = mp.solutions.drawing_styles
 # Video pose objectPose
 vid_pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.7, min_tracking_confidence=0.7)
 
-print(vars(mp_pose.PoseLandmark))
 
 # Pose Landmarks
 landmarks = PoseDetection()
 
+goodMarks = (0,15,16,19,20,29,30,31,32)
 
-print(landmarks)
+# Get pose landmarks and all detected points
+dic = {}
+for mark, data_point in zip(goodMarks, landmarks.landmark):
+    dic[mark.value] = dict(landmark = mark.name, 
+        x = data_point.x,
+        y = data_point.y,
+        z = data_point.z,
+        vis = data_point.visibility)
+
+# hand = dic[19]['vis']
+# print(hand)
+
+ranges = [[0,0.3,0.5,0.7,1], [0,0.25,0.5,0.75,1]]
 
 
 cap.release()
@@ -61,13 +73,7 @@ cv2.destroyAllWindows()
 
 
 
-
-# Store array of locations
-
 # Read hand/foot motions
-
-# Store Appendage location array
-
 
 ## Play associated sounds
 
