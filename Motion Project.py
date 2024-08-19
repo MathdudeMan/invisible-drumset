@@ -50,21 +50,30 @@ vid_pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.7, m
 # Pose Landmarks
 landmarks = PoseDetection()
 
+
+# Setup pose landmarks
 goodMarks = (0,15,16,19,20,29,30,31,32)
 
+markPairs = [(15,19),(16,20),(29,31),(30,32)]
+
+goodLand = ()
+for num in goodMarks:
+    goodLand += (mp_pose.PoseLandmark(num), )
+    
 # Get pose landmarks and all detected points
 dic = {}
-for mark, data_point in zip(goodMarks, landmarks.landmark):
-    dic[mark.value] = dict(landmark = mark.name, 
+for mark, data_point in zip(goodLand, landmarks.landmark):
+    dic[mark.name] = dict(index = mark.value, 
         x = data_point.x,
         y = data_point.y,
         z = data_point.z,
         vis = data_point.visibility)
 
-# hand = dic[19]['vis']
-# print(hand)
+print(dic)
 
 ranges = [[0,0.3,0.5,0.7,1], [0,0.25,0.5,0.75,1]]
+
+
 
 
 cap.release()
