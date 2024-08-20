@@ -2,47 +2,110 @@ import pygame
 import math
 #import pyglet
 
-def hit(tail, head, range):
-    # Check head / tail of extremity for drum hit
+class limb:
+    def __init__(self, tail, head):
+        self.tail = tail
+        self.head = head
+        self.angle = [] #Vector angle values
+        self.delta = [] #Angular velocity values
 
-    isHit = hitCheck(tail, head)
+    def addAngle(self):
+        
+        deltaX = self.head.x - self.tail.x
+        deltaY = self.head.y - self.tail.y
+        theta = math.atan2(deltaX, deltaY)
 
-    if isHit:
-        mapNum = map(head.x, head.y, range)
+        self.angle.append(theta)
+
+        if self.delta.length > 1:
+            change = self.angle[-1] - self.angle[-2]
+            self.delta.append(change)
+
+    pass
+
+
+def PoseDetection():
+
+    while True:
+
+        # Read & process image
+        success, img = cap.read()
+        if not success:
+            break
+
+        img = cv2.resize(img, (800, 600))
+        imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        results = vid_pose.process(imgRGB)
+
+        # Read & draw all landmarks
+        landmarks = results.pose_landmarks
+
+        mp_drawing.draw_landmarks(img, results.pose_landmarks, mp_pose.POSE_CONNECTIONS, landmark_drawing_spec = mp_drawing.DrawingSpec(color = (255,255,255), thickness = 2, circle_radius = 2), connection_drawing_spec = mp_drawing.DrawingSpec(color = (255,0,255), thickness = 2, circle_radius = 1))
+
+        # Show frame
+        cv2.imshow("Image", img)
+
+
+        # Get hand / foot landmarks
+        dic = {}
+        for mark, data_point in zip(markNames, landmarks.landmark):
+            dic[mark.value] = dict(index = mark.name, 
+                x = data_point.x,
+                y = data_point.y,
+                z = data_point.z,
+                vis = data_point.visibility)
+
+        # for all 4 extremities:
+            hitCheck()
+
+        # Press Q on keyboard to exit, else wait 1ms
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    return landmarks
+
+
+def hitCheck(limb):
+
+    limb.addAngle()
+
+    a = limb.delta[-2]
+    b = limb.delta[-1]
+
+    R = 15 #Negative threshhold
+
+    if abs(a) > R and abs(0.2*a) > abs(b):
+        
+        mapNum = map(limb)
         playSound(mapNum)
 
-def hitCheck(tail, head):
     return
 
-def angle(tail, head):
-    
-    deltaX = tail.x - head.x
-    deltaY = tail.y - tail.y
-    angle = math.atan2(deltaX, deltaY)
-    return angle
 
-
-def map(x, y, range):
+def map(limb):
     # Determine region of appendage, indexed 1 - 16
     
     mapNum = 0
+
+    x = limb.head.x
+    y = limb.head.y
     
     # x Check
-    if x < range[1]:
+    if x < gridRanges[1]:
         mapNum += 1
-    elif x < range[2]:
+    elif x < gridRanges[2]:
         mapNum += 2
-    elif x < range[3]:
+    elif x < gridRanges[3]:
         mapNum += 3
     else:
         mapNum += 4
 
     # y Check
-    if y < range[1]:
+    if y < gridRanges[1]:
         pass
-    elif y < range[2]:
+    elif y < gridRanges[2]:
         mapNum += 4
-    elif y < range[3]:
+    elif y < gridRanges[3]:
         mapNum += 8
     else:
         mapNum += 12
@@ -53,7 +116,7 @@ def map(x, y, range):
 def playSound(mapNum):
 
     sounds = {
-        1: "Cymbal 1",
+        1: "Cymbal 1", # Get soundfile, implement here
         2: "Cymbal 2",
         3: "Cymbal 3",
         4: "Cymbal 4",
@@ -71,7 +134,7 @@ def playSound(mapNum):
         16: "Whoopie Cushion"
     }
 
-    pygame.mixer.init() #Add to regular file
+    pygame.mixer.init() #Add this line to regular file
 
     pygame.mixer.music.load(sounds[mapNum])
     pygame.mixer.music.play()
