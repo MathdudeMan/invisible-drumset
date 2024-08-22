@@ -2,27 +2,32 @@ import pygame
 import math
 #import pyglet
 
-class limb:
-    def __init__(self, tail, head):
+class extremity:
+    def __init__(self, tail = int, head = int):
         self.tail = tail
+        self.tailX = int
+        self.tailY = int
+
         self.head = head
+        self.headX = int
+        self.headY = int
+
         self.angle = [] #Vector angle values
         self.delta = [] #Angular velocity values
 
     def addAngle(self):
         
-        deltaX = self.head.x - self.tail.x
-        deltaY = self.head.y - self.tail.y
+        deltaX = self.headX - self.tailX
+        deltaY = self.headY - self.tailY
         theta = math.atan2(deltaX, deltaY)
 
         self.angle.append(theta)
 
-        if self.delta.length > 1:
+        if len(self.delta) > 1:
             change = self.angle[-1] - self.angle[-2]
             self.delta.append(change)
 
     pass
-
 
 def PoseDetection():
 
@@ -47,16 +52,15 @@ def PoseDetection():
 
 
         # Get hand / foot landmarks
-        dic = {}
-        for mark, data_point in zip(markNames, landmarks.landmark):
-            dic[mark.value] = dict(index = mark.name, 
+        for mark, data_point in zip(range(0,32), landmarks.landmark):
+            dic[mark].update(
                 x = data_point.x,
                 y = data_point.y,
                 z = data_point.z,
                 vis = data_point.visibility)
 
-        # for all 4 extremities:
-            hitCheck()
+        for item in limbs:
+            hitCheck(item)
 
         # Press Q on keyboard to exit, else wait 1ms
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -67,7 +71,12 @@ def PoseDetection():
 
 def hitCheck(limb):
 
-    limb.addAngle()
+    item.tailX = dic[item.tail]['x']
+    item.tailY = dic[item.tail]['y']
+    item.headX = dic[item.head]['x']
+    item.headY = dic[item.head]['y']
+
+    item.addAngle()
 
     a = limb.delta[-2]
     b = limb.delta[-1]
