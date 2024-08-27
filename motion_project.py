@@ -1,8 +1,9 @@
 import cv2
 import mediapipe as mp
 from math import degrees, atan2
-import numpy as np
+import matplotlib.pyplot as plt
 import pygame
+from playsound import playsound
 
 
 class extremity:
@@ -12,10 +13,12 @@ class extremity:
         self.tail = tail
         self.tailX = int
         self.tailY = int
+        self.tailVis = int
 
         self.head = head
         self.headX = int
         self.headY = int
+        self.tailVis = int
 
         self.angle = [] #Vector angle values
         self.angVel = [] #Angular velocity values
@@ -57,19 +60,23 @@ def PoseDetection():
 
 
         # Get hand / foot landmarks
-        for mark in range(33):
-            data_point = landmarks.landmark[mark]
-            dic[mark] = {
-                'x': data_point.x,
-                'y': data_point.y,
-                'z': data_point.z,
-                'vis': data_point.visibility}
+
+        try:
+            for mark in range(33):
+                data_point = landmarks.landmark[mark]
+                dic[mark] = {
+                    'x': data_point.x,
+                    'y': data_point.y,
+                    'z': data_point.z,
+                    'vis': data_point.visibility}
+        except AttributeError:
+            pass
 
         for item in limbs:
             hitCheck(item)
 
         # Press Q on keyboard to exit, else wait 1ms
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(3) & 0xFF == ord('q'):
             break
 
 
@@ -84,8 +91,11 @@ def hitCheck(limb):
     limb.headY = dic[limb.head]['y']
     limb.headVis = dic[limb.head]['vis']
 
+    # Minimum visibility value for hit
+    visMin = 0.5
+
     # If extremity visible, update angles
-    if limb.tailVis > 0.3 and limb.headVis > 0.3:
+    if limb.tailVis > visMin and limb.headVis > visMin:
         limb.addAngle()
     else:
         return
@@ -97,18 +107,18 @@ def hitCheck(limb):
     v = limb.angVel[-2]
     w = limb.angVel[-1]
 
-    R = 15 #Downward angular velocity activation threshhold
+    R = 10 #Downward angular velocity activation threshold
 
-    rightHit = a > 0 and v < -R and 0.2*v < w
-    leftHit = a < 0 and v > R and 0.2*v > w
+    rightHit = a > 0 and v > R and 0.5*v > w
+    leftHit = a < 0 and v < -R and 0.5*v < w
 
     if leftHit or rightHit:
         
-        pygame.mixer.music.load('Motion-Project/Audio/596890__stoltingmediagroup__smg_sound_drum_hat_0000035927.wav')
-        pygame.mixer.music.play()
-
         mapNum = map(limb)
-        #playSound(mapNum)
+
+        print("hit", len(limb.angle), mapNum, limb.headVis)
+
+        playSound(mapNum)
 
     return
 
@@ -122,21 +132,21 @@ def map(limb):
     y = limb.headY
     
     # x Check
-    if x < gridRanges[1]:
+    if x < gridRanges[0][1]:
         mapNum += 1
-    elif x < gridRanges[2]:
+    elif x < gridRanges[0][2]:
         mapNum += 2
-    elif x < gridRanges[3]:
+    elif x < gridRanges[0][3]:
         mapNum += 3
     else:
         mapNum += 4
 
     # y Check
-    if y < gridRanges[1]:
+    if y < gridRanges[1][1]:
         pass
-    elif y < gridRanges[2]:
+    elif y < gridRanges[1][2]:
         mapNum += 4
-    elif y < gridRanges[3]:
+    elif y < gridRanges[1][3]:
         mapNum += 8
     else:
         mapNum += 12
@@ -147,32 +157,28 @@ def map(limb):
 def playSound(mapNum = int):
 
     sounds = {
-        1: "Cymbal 1", # Get soundfile, implement here
-        2: "Cymbal 2",
-        3: "Cymbal 3",
-        4: "Cymbal 4",
-        5: "Ride",
-        6: "Tom 2",
-        7: "Tom 1",
-        8: "Hi Hat",
-        9: "Floor Tom",
-        10: "Snare",
-        11: "Snare",
-        12: "Cowbell",
-        13: "Cat",
-        14: "BD",
-        15: "Floor Hi Hat",
-        16: "Whoopie Cushion"
+        1: "./Motion-Project/Drum Sounds/Samples/tom-fm.wav", # Get soundfile, implement here
+        2: "./Motion-Project/Drum Sounds/Samples/crash-acoustic.wav",
+        3: "./Motion-Project/Drum Sounds/Samples/crash-noise.wav",
+        4: "./Motion-Project/Drum Sounds/Samples/openhat-analog.wav",
+        5: "./Motion-Project/Drum Sounds/Samples/ride-acoustic01.wav",
+        6: "./Motion-Project/Drum Sounds/Samples/tom-acoustic02.wav",
+        7: "./Motion-Project/Drum Sounds/Samples/tom-acoustic01.wav",
+        8: "./Motion-Project/Drum Sounds/Samples/hihat-plain.wav",
+        9: "./Motion-Project/Drum Sounds/Samples/tom-rototom.wav",
+        10: "./Motion-Project/Drum Sounds/Samples/snare-acoustic01.wav",
+        11: "./Motion-Project/Drum Sounds/Samples/snare-acoustic01.wav",
+        12: "./Motion-Project/Drum Sounds/Samples/perc-metal.wav",
+        13: "./Motion-Project/Drum Sounds/Samples/openhat-analog.wav",
+        14: "./Motion-Project/Drum Sounds/Samples/kick-classic.wav",
+        15: "./Motion-Project/Drum Sounds/Samples/hihat-plain.wav",
+        16: "./Motion-Project/Drum Sounds/Samples/kick-gritty.wav"
     }
 
-    pygame.mixer.music.load('Motion-Project/Audio/596890__stoltingmediagroup__smg_sound_drum_hat_0000035927.wav')
+    playsound(sounds[mapNum], block = False)
 
-    #pygame.mixer.music.load(sounds[mapNum])
-    pygame.mixer.music.play()
 
 ####################################################
-
-pygame.mixer.init()
 
 # Init mediapipe pose class
 mp_pose = mp.solutions.pose
@@ -205,6 +211,14 @@ dic = dict.fromkeys(range(33), coordinate)
 
 PoseDetection()
 
+for limb in limbs:
+    plt.subplot(1,2,1)
+    plt.plot([x for x in range(len(limb.angle))], limb.angle, label = "angle")
+    plt.subplot(1,2,2)
+    plt.plot([x for x in range(len(limb.angVel))], limb.angVel, label = "theta")
+
+plt.show()
+plt.legend()
 
 cap.release()
 cv2.destroyAllWindows()
