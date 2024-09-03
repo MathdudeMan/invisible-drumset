@@ -8,9 +8,9 @@ from playsound import playsound
 class node:
     def __init__(self, loc = int):
         self.loc = loc
-        self.x = int
-        self.y = int
-        self.vis = int
+        self.x = float
+        self.y = float
+        self.vis = float
 
 # class headNode(node):
 #   def __init__(self, loc = int):  
@@ -20,7 +20,7 @@ class node:
 class extremity:
     def __init__(self, tail = int, head = int):
         
-        # # Tail and head of foot / hand vector, pointed outward from base of extremity
+        # Tail and head of foot / hand vector, pointed outward from base of extremity
         self.tail = node(tail)
         self.head = node(head)
 
@@ -40,6 +40,10 @@ class extremity:
         if len(self.angle) > 1:
             change = self.angle[-1] - self.angle[-2]
             self.angVel.append(change)
+
+        # if len(self.angVel) > 3:
+        #     self.angle.pop()
+        #     self.angVel.pop()
 
 
 def PoseDetection():
@@ -76,6 +80,8 @@ def PoseDetection():
 
     limbs = [leftHand, rightHand, leftFoot, rightFoot]
 
+    activeSound = False
+
     # Main loop
     while True:
 
@@ -91,13 +97,13 @@ def PoseDetection():
         # Read all landmarks
         landmarks = results.pose_landmarks
 
+        if landmarks == None:
+            continue
+
         # Get hand / foot landmarks
         for mark in range(33):
 
             data_point = landmarks.landmark[mark]
-
-            if data_point == None:
-                continue
 
             dic[mark] = {
                 'x': data_point.x,
@@ -128,8 +134,7 @@ def PoseDetection():
             # Show frame
             cv2.imshow("Motion Cap", frame)
 
-            # TODO initialize Grid
-            rows, columns = updateGrid(torso)
+            gridRows, gridColumns = updateGrid(torso)
 
             for item in limbs:
 
@@ -138,15 +143,39 @@ def PoseDetection():
                 # FIXME limb.head.vel.append(dic[limb.head]['y'] - limb.head.y)
                 updateNode(item.head, dic)
 
-                hitCheck(item)
-                # if hitCheck == True:
-                #   mapNum = map2(item)
-                #   mapNum arguments
-                #   Get sound file from mapNum
-                #   audio(mapNum)
+                # Check for limb hit
+                isHit = hitCheck(item)
 
+                # FIXME Prototype
+                activeSound = True
 
-                # FIXME limb.head.vel.pop()
+                if isHit == True:
+
+                    mapVal = map(item, gridRows, gridColumns)
+                  
+                    # Mapping adjustments
+                    if mapVal == False:
+                        break
+
+                    elif mapVal == 'On':
+                        activeSound = True
+
+                    elif mapVal == 'Off':
+                        activeSound = False
+                        audio(mapVal)
+
+                    elif mapVal == 'Hat' and leftFoot.head.vis > 0.5 and abs(leftFoot.angle[-1]) > 90:
+                        mapVal == 'HatOpen'
+                  
+                    # Play associated Audio
+                    if activeSound == True:
+                        audio(mapVal)
+
+                    # TODO remove for reference
+                    print("hit", len(item.angle), mapVal)
+
+                # FIXME item.head.vel.pop()
+                # item.angle.pop()
 
         # Press Q on keyboard to exit, else wait 3ms
         if cv2.waitKey(3) & 0xFF == ord('q'):
@@ -156,31 +185,38 @@ def PoseDetection():
 
 
 def updateGrid(torso):
-    # Calculate hit grid from torso points
+# Calculate hit grid from torso points
 
-    leftShoulder = torso(1)
-    rightShoulder = torso(2)
-    leftHip = torso(3)
-    rightHip = torso(4)
+    # Reinitialize torso points
+    leftShoulder = torso[0]
+    rightShoulder = torso[1]
+    leftHip = torso[2]
+    rightHip = torso[3]
 
+    # Calculate reference locations
+    # TODO Explain grid in ReadMe
     waistY = avg(leftHip.y, rightHip.y)
     shoulderY = avg(leftShoulder.y, rightShoulder.y)
-    midY = avg(waistY, shoulderY)
-    waist = leftHip.x - rightHip.x
+    torsoHalf = (waistY - shoulderY) / 2
+    waistDisp = leftHip.x - rightHip.x
     midX = avg(leftHip.x, rightHip.x)
 
-    yGrid = [0, shoulderY - midY, waistY - midY, waistY + midY, 1]
-    xGrid = [[0, midX, 1], [0, rightShoulder.x, leftHip.x, leftHip.x + waist, 1], [0, rightShoulder.x + waist/2, rightHip.x, leftHip.x, leftShoulder.x + waist/2, 1], [0, midX, 1]]
+    # Grid range calculations
+    rowRanges = [0, shoulderY - torsoHalf, waistY - torsoHalf, waistY + torsoHalf, 1]
+    colRanges = [[0, midX, 1], [0, rightShoulder.x - waistDisp, rightHip.x, leftHip.x, leftShoulder.x + waistDisp / 2, 1], [0, rightShoulder.x, leftHip.x, leftHip.x + waistDisp, 1], [0, midX, 1]]
 
-    return yGrid, xGrid
+    return rowRanges, colRanges
+
 
 def avg(x, y):
+# Calculate average of two points
 
     average = (x + y) / 2
     return average
 
 
 def updateNode(node, dic = {}):
+# Update values of a node from results dictionary
 
     node.x = dic[node.loc]['x']
     node.y = dic[node.loc]['y']
@@ -190,16 +226,16 @@ def updateNode(node, dic = {}):
 def hitCheck(limb):
 
     visMin = 0.5 # Minimum visibility value for hit
-    R = 10 # Downward angular velocity activation threshold
+    R = 15 # Downward angular velocity activation threshold
 
     if limb.tail.vis < visMin and limb.head.vis < visMin:
-        return
+        return False
 
     # Update limb angles
     limb.addAngle()
 
     if len(limb.angVel) < 2:
-        return
+        return False
 
     # Prep hit check from extremity angle behavior
     a = limb.angle[-1]
@@ -208,130 +244,62 @@ def hitCheck(limb):
     # FIXME h1 = limb.head.vel[-1]
     # h2 = limb.head.vel[-2]
 
-    # Boolean Checks
+    # Boolean Checks for hit criteria
     rightHit = a > 0 and v1 > R and 0.5*v1 > v2
     leftHit = a < 0 and v1 < -R and 0.5*v1 < v2
     # FIXME midHit = (abs(a) < 10 or abs(a) > 170) and h1 < R and 0.5*h1 > h2
 
     if leftHit or rightHit: # or midHit
-        
-        mapNum = map(limb)
-
-        print("hit", len(limb.angle), mapNum, limb.head.vis)
-            
-        # if mapNum == 'On':
-        #     playsound(Windows Startup)
-        #   active = True
-        # elif mapNum =='Off':
-        #   playsound(Windows Shutdown)   
-        #   active = False
-
-        # if mapNum == 'Hat':
-        #    if leftFoot.headVis > 0.5 and abs(leftFoot.angle[-1]) > 90:
-        #           mapNum == 'HatOpen'
-
-        # if active == True:
-        audio(mapNum)
-
-    return
-
-
-def map(limb):
-    # Determine region of appendage, indexed 1 - 16 in 4x4 grid from top left corner
-    
-    # Sound grid ranges
-    hitGrid = [[0,0.3,0.5,0.65,1], [0,0.25,0.5,0.75,1]]
-
-    mapNum = 0
-
-    x = limb.head.x
-    y = limb.head.y
-    
-    # x Check
-    if x < hitGrid[0][1]:
-        mapNum += 1
-    elif x < hitGrid[0][2]:
-        mapNum += 2
-    elif x < hitGrid[0][3]:
-        mapNum += 3
+        return True
     else:
-        mapNum += 4
-
-    # y Check
-    if y < hitGrid[1][1]:
-        pass
-    elif y < hitGrid[1][2]:
-        mapNum += 4
-    elif y < hitGrid[1][3]:
-        mapNum += 8
-    else:
-        mapNum += 12
-
-    # Open Hi Hat Check
-    # if mapNum == 7 and leftFoot.headVis > 0.5 and abs(leftFoot.angle[-1]) > 90:
-    #     mapNum = 17
-
-    return mapNum
+        return False
 
 
-def map2(extremity, xGrid, yGrid):
+def map(extremity, rowRanges, colRanges):
     
     x = extremity.head.x
     y = extremity.head.y
 
-    xMap = int
-    yMap = int
+    rowMap = int
+    colMap = int
 
     # Map Row, then Column of extremity head
-    for i in range(len(yGrid) - 1):
-        if yGrid[i] <= y <= yGrid[i + 1]:
-            yMap = i
+    for i in range(len(rowRanges) - 1):
+        if rowRanges[i] <= y <= rowRanges[i + 1]:
+            rowMap = i
+        elif y < 0 or y > 1:
+            return False # For when hit triggered with extremity out of frame
 
-    for j in range(len(xGrid(yMap) - 1)):
-        if xGrid[j] <= x <= xGrid[j + 1]:
-            xMap = j
+    for j in range(len(colRanges[rowMap]) - 1):
+        if colRanges[rowMap][j] <= x <= colRanges[rowMap][j + 1]:
+            colMap = j
+        elif x < 0 or x > 1:
+            return False
 
     # Map to drum code
-    soundCodes = [['On', 'Off'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'CC'], ['BD', 'HatPed']]
+    soundCodes = [['On', 'Off'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'HatPed']]
 
-    mapVar = soundCodes(yMap(xMap))
+    mapVal = soundCodes[rowMap][colMap]
 
-    return mapVar
+    return mapVal
 
 
 def audio(mapNum):
 
+    # Audio dictionary
     sounds = {
-        1: "./Motion-Project/Drum Sounds/Samples/tom-fm.wav", # Get soundfile, implement here
-        2: "./Motion-Project/Drum Sounds/Samples/crash-acoustic.wav",
-        3: "./Motion-Project/Drum Sounds/Samples/crash-noise.wav",
-        4: "./Motion-Project/Drum Sounds/Samples/openhat-analog.wav",
-        5: "./Motion-Project/Drum Sounds/Samples/ride-acoustic01.wav",
-        6: "./Motion-Project/Drum Sounds/Samples/tom-acoustic02.wav",
-        7: "./Motion-Project/Drum Sounds/Samples/tom-acoustic01.wav",
-        8: "./Motion-Project/Drum Sounds/Samples/hihat-plain.wav",
-        9: "./Motion-Project/Drum Sounds/Samples/tom-rototom.wav",
-        10: "./Motion-Project/Drum Sounds/Samples/snare-acoustic01.wav",
-        11: "./Motion-Project/Drum Sounds/Samples/snare-acoustic01.wav",
-        12: "./Motion-Project/Drum Sounds/Samples/perc-metal.wav",
-        13: "./Motion-Project/Drum Sounds/Samples/openhat-analog.wav",
-        14: "./Motion-Project/Drum Sounds/Samples/kick-classic.wav",
-        15: "./Motion-Project/Drum Sounds/Samples/hihat-plain.wav",
-        16: "./Motion-Project/Drum Sounds/Samples/kick-gritty.wav",
-        17: "./Motion-Project/Drum Sounds/Samples/openhat-tight.wav"
+        'Ride': "./Motion-Project/Drum Sounds/Samples/ride-acoustic01.wav",
+        'Tom1': "./Motion-Project/Drum Sounds/Samples/tom-acoustic01.wav",
+        'Tom2': "./Motion-Project/Drum Sounds/Samples/tom-acoustic02.wav",
+        'Hat': "./Motion-Project/Drum Sounds/Samples/hihat-plain.wav",
+        'HatOpen': "./Motion-Project/Drum Sounds/Samples/openhat-analog.wav",
+        'Crash': "./Motion-Project/Drum Sounds/Samples/crash-acoustic.wav",
+        'FTom': "./Motion-Project/Drum Sounds/Samples/tom-rototom.wav",
+        'SD': "./Motion-Project/Drum Sounds/Samples/snare-acoustic01.wav",
+        'BD': "./Motion-Project/Drum Sounds/Samples/kick-classic.wav",
+        'On': './Motion-Project/Drum Sounds/Samples/clap-808.wav',
+        'Off': './Motion-Project/Drum Sounds/Samples/cowbell-808.wav'
     }
-
-    # sounds = {
-    #     'Ride': "./Motion-Project/Drum Sounds/Samples/ride-acoustic01.wav",
-    #     'Tom1': "./Motion-Project/Drum Sounds/Samples/tom-acoustic01.wav",
-    #     'Tom2': "./Motion-Project/Drum Sounds/Samples/tom-acoustic02.wav",
-    #     'Hat': "./Motion-Project/Drum Sounds/Samples/hihat-plain.wav",
-    #     'HatOpen': "./Motion-Project/Drum Sounds/Samples/openhat-analog.wav",
-    #     'Crash': "./Motion-Project/Drum Sounds/Samples/crash-acoustic.wav",
-    #     'FTom': "./Motion-Project/Drum Sounds/Samples/tom-rototom.wav",
-    #     'SD': "./Motion-Project/Drum Sounds/Samples/snare-acoustic01.wav",
-    #     'BD': "./Motion-Project/Drum Sounds/Samples/kick-classic.wav"
-    # }
 
     playsound(sounds[mapNum], block = False)
 
@@ -345,6 +313,9 @@ capHeight = cap.get(4) #480
 
 windowWidth = 800
 windowHeight = 600
+
+xGrid = []
+yGrid = []
 
 limbs = PoseDetection()
 
