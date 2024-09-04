@@ -12,10 +12,6 @@ class node:
         self.y = float
         self.vis = float
 
-# class headNode(node):
-#   def __init__(self, loc = int):  
-#       self.yVel = [int]
-
 
 class extremity:
     def __init__(self, tail = int, head = int):
@@ -24,22 +20,31 @@ class extremity:
         self.tail = node(tail)
         self.head = node(head)
 
-        self.angle = [] #Vector angle values
-        self.angVel = [] #Angular velocity values
+        self.angle = [] # Vector angle values
+        self.angVel = [] # Angular velocity values
+        self.vert = [] # Delta Y values
+        self.dVert = [] # Change in delta Y (rel. velocity of head)
 
     def addAngle(self):
         
-        # Relative positional differences (i.e. 0.0 - 1.0) converted to absolute values
-        deltaX = capWidth * (self.head.x - self.tail.x)
-        deltaY = capHeight * (self.head.y - self.tail.y)
+        # Distances relative to screen (i.e. 0.0 - 1.0) converted to absolute distances
+        xDisp = capWidth * (self.head.x - self.tail.x)
+        yDisp = capHeight * (self.head.y - self.tail.y)
 
-        #Angle value normalized to degree range -180 : 180, w. origin shifted to floor
-        theta = degrees(atan2(deltaY, deltaX)) + 90
+        # Angle value normalized to degree range -180 : 180, w. origin shifted to floor
+        theta = degrees(atan2(xDisp, yDisp)) # 
         self.angle.append(theta)
 
         if len(self.angle) > 1:
-            change = self.angle[-1] - self.angle[-2]
-            self.angVel.append(change)
+            dTheta = self.angle[-1] - self.angle[-2]
+            self.angVel.append(dTheta)
+
+        # Update change in delta Y for vertical hit check
+        self.vert.append(-1 * yDisp)
+        if len(self.vert) > 1:
+            deltaY = self.vert[-1] - self.vert[-2]
+            self.dVert.append(deltaY)
+            
 
         # if len(self.angVel) > 3:
         #     self.angle.pop()
@@ -73,10 +78,10 @@ def PoseDetection():
     torso = [leftShoulder, rightShoulder, leftHip, rightHip]
 
     # Limb definitions
-    leftHand = extremity(15,19)
-    rightHand = extremity(16,20)
-    leftFoot = extremity(29,31)
-    rightFoot = extremity(30,32)
+    leftHand = extremity(15, 19)
+    rightHand = extremity(16, 20)
+    leftFoot = extremity(29, 31)
+    rightFoot = extremity(30, 32)
 
     limbs = [leftHand, rightHand, leftFoot, rightFoot]
 
@@ -140,14 +145,10 @@ def PoseDetection():
 
                 # Update extremity vector locations, visibility
                 updateNode(item.tail, dic)
-                # FIXME limb.head.vel.append(dic[limb.head]['y'] - limb.head.y)
                 updateNode(item.head, dic)
 
                 # Check for limb hit
                 isHit = hitCheck(item)
-
-                # FIXME Prototype
-                activeSound = True
 
                 if isHit == True:
 
@@ -172,9 +173,8 @@ def PoseDetection():
                         audio(mapVal)
 
                     # TODO remove for reference
-                    print("hit", len(item.angle), mapVal)
+                    print("hit", len(item.angle), mapVal, item.head.x, item.head.y, item.angle[-1])
 
-                # FIXME item.head.vel.pop()
                 # item.angle.pop()
 
         # Press Q on keyboard to exit, else wait 3ms
@@ -227,6 +227,10 @@ def hitCheck(limb):
 
     visMin = 0.5 # Minimum visibility value for hit
     R = 15 # Downward angular velocity activation threshold
+    S = -15 # Downward vertical velocity activation threshold
+    minAngle = 10
+    maxAngle = 150
+
 
     if limb.tail.vis < visMin and limb.head.vis < visMin:
         return False
@@ -241,15 +245,15 @@ def hitCheck(limb):
     a = limb.angle[-1]
     v1 = limb.angVel[-2]
     v2 = limb.angVel[-1]
-    # FIXME h1 = limb.head.vel[-1]
-    # h2 = limb.head.vel[-2]
+    h1 = limb.dVert[-2]
+    h2 = limb.dVert[-1]
 
     # Boolean Checks for hit criteria
-    rightHit = a > 0 and v1 > R and 0.5*v1 > v2
-    leftHit = a < 0 and v1 < -R and 0.5*v1 < v2
-    # FIXME midHit = (abs(a) < 10 or abs(a) > 170) and h1 < R and 0.5*h1 > h2
+    leftHit = minAngle < a < maxAngle and v1 < -R and v2 > (0.5 * v1) # Interrupted downward spike in angular velocity
+    rightHit = (-1 * maxAngle) < a < minAngle and v1 > R and v2 < (0.5 * v1) # Interrupted upward spike in angular velocity
+    midHit = (abs(a) < minAngle or abs(a) > maxAngle) and h1 < S and h2 > (0.5 * h1)
 
-    if leftHit or rightHit: # or midHit
+    if leftHit or rightHit or midHit:
         return True
     else:
         return False
@@ -277,7 +281,7 @@ def map(extremity, rowRanges, colRanges):
             return False
 
     # Map to drum code
-    soundCodes = [['On', 'Off'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'HatPed']]
+    soundCodes = [['On', 'Off'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
 
     mapVal = soundCodes[rowMap][colMap]
 
@@ -319,11 +323,17 @@ yGrid = []
 
 limbs = PoseDetection()
 
-for limb in limbs:
-    plt.subplot(1,2,1)
-    plt.plot([x for x in range(len(limb.angle))], limb.angle, label = "angle")
-    plt.subplot(1,2,2)
-    plt.plot([x for x in range(len(limb.angVel))], limb.angVel, label = "theta")
+for item in limbs:
+    plt.subplot(2,2,1)
+    plt.plot([x for x in range(len(item.angle))], item.angle, label = "angle")
+    plt.subplot(2,2,2)
+    plt.plot([x for x in range(len(item.angVel))], item.angVel, label = "theta")
+    plt.subplot(2,2,3)
+    plt.plot([x for x in range(len(item.vert))], item.vert, label = "vert")
+    plt.subplot(2,2,4)
+    plt.plot([x for x in range(len(item.dVert))], item.dVert, label = "dVert")
+
+
 
 plt.show()
 
