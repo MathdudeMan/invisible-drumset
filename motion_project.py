@@ -3,7 +3,10 @@ import mediapipe as mp
 from math import degrees, atan2
 import matplotlib.pyplot as plt
 from playsound import playsound
+import sounddevice as sd
+import soundfile as sf
 
+# sd.RawOutputStream(latency = 'low')
 
 class node:
     def __init__(self, loc = int):
@@ -32,7 +35,7 @@ class extremity:
         yDisp = capHeight * (self.head.y - self.tail.y)
 
         # Angle value normalized to degree range -180 : 180, w. origin shifted to floor
-        theta = degrees(atan2(xDisp, yDisp)) # 
+        theta = degrees(atan2(xDisp, yDisp))
         self.angle.append(theta)
 
         if len(self.angle) > 1:
@@ -46,9 +49,11 @@ class extremity:
             self.dVert.append(deltaY)
             
 
-        # if len(self.angVel) > 3:
-        #     self.angle.pop()
-        #     self.angVel.pop()
+        if len(self.dVert) > 3:
+            self.angle.pop(0)
+            self.angVel.pop(0)
+            self.vert.pop(0)
+            self.dVert.pop(0)
 
 
 def PoseDetection():
@@ -84,8 +89,27 @@ def PoseDetection():
     rightFoot = extremity(30, 32)
 
     limbs = [leftHand, rightHand, leftFoot, rightFoot]
+    
+    # Audio dictionary
+    sounds = {
+        'Ride': "./Motion-Project/Drum Sounds/Samples/ride-acoustic01.wav",
+        'Tom1': "./Motion-Project/Drum Sounds/Samples/tom-acoustic01.wav",
+        'Tom2': "./Motion-Project/Drum Sounds/Samples/tom-acoustic02.wav",
+        'Hat': "./Motion-Project/Drum Sounds/Samples/hihat-plain.wav",
+        'HatOpen': "./Motion-Project/Drum Sounds/Samples/openhat-analog.wav",
+        'Crash': "./Motion-Project/Drum Sounds/Samples/crash-acoustic.wav",
+        'FTom': "./Motion-Project/Drum Sounds/Samples/tom-rototom.wav",
+        'SD': "./Motion-Project/Drum Sounds/Samples/snare-acoustic01.wav",
+        'BD': "./Motion-Project/Drum Sounds/Samples/kick-classic.wav",
+        'On': './Motion-Project/Drum Sounds/Samples/clap-808.wav',
+        'Off': './Motion-Project/Drum Sounds/Samples/cowbell-808.wav'
+    }
+
+    # Audio mapping grid
+    soundCodes = [['On', 'Off'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
 
     activeSound = False
+            
 
     # Main loop
     while True:
@@ -141,6 +165,8 @@ def PoseDetection():
 
             gridRows, gridColumns = updateGrid(torso)
 
+            activeSound = True
+
             for item in limbs:
 
                 # Update extremity vector locations, visibility
@@ -152,7 +178,7 @@ def PoseDetection():
 
                 if isHit == True:
 
-                    mapVal = map(item, gridRows, gridColumns)
+                    mapVal = map(item, gridRows, gridColumns, soundCodes)
                   
                     # Mapping adjustments
                     if mapVal == False:
@@ -163,22 +189,26 @@ def PoseDetection():
 
                     elif mapVal == 'Off':
                         activeSound = False
-                        audio(mapVal)
+                        playsound(sounds[mapVal], block = False)
 
                     elif mapVal == 'Hat' and leftFoot.head.vis > 0.5 and abs(leftFoot.angle[-1]) > 90:
                         mapVal == 'HatOpen'
                   
+
                     # Play associated Audio
                     if activeSound == True:
-                        audio(mapVal)
+                        # playsound(sounds[mapVal], block = False)
+                        # file = sounds[mapVal]
+                        data, fs = sf.read(sounds[mapVal], dtype='float32')  
+                        sd.play(data, fs)
 
                     # TODO remove for reference
-                    print("hit", len(item.angle), mapVal, item.head.x, item.head.y, item.angle[-1])
-
-                # item.angle.pop()
+                    print("hit", mapVal, item.dVert[-1])
 
         # Press Q on keyboard to exit, else wait 3ms
         if cv2.waitKey(3) & 0xFF == ord('q'):
+            break
+        if cv2.getWindowProperty('Motion Cap', cv2.WND_PROP_VISIBLE) < 1:
             break
 
     return limbs
@@ -186,6 +216,7 @@ def PoseDetection():
 
 def updateGrid(torso):
 # Calculate hit grid from torso points
+# hitGrid: [['On', 'Off'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
 
     # Reinitialize torso points
     leftShoulder = torso[0]
@@ -201,7 +232,7 @@ def updateGrid(torso):
     waistDisp = leftHip.x - rightHip.x
     midX = avg(leftHip.x, rightHip.x)
 
-    # Grid range calculations
+    # Calculate endpoints / midpoints of hit grid
     rowRanges = [0, shoulderY - torsoHalf, waistY - torsoHalf, waistY + torsoHalf, 1]
     colRanges = [[0, midX, 1], [0, rightShoulder.x - waistDisp, rightHip.x, leftHip.x, leftShoulder.x + waistDisp / 2, 1], [0, rightShoulder.x, leftHip.x, leftHip.x + waistDisp, 1], [0, midX, 1]]
 
@@ -226,11 +257,10 @@ def updateNode(node, dic = {}):
 def hitCheck(limb):
 
     visMin = 0.5 # Minimum visibility value for hit
-    R = 15 # Downward angular velocity activation threshold
-    S = -15 # Downward vertical velocity activation threshold
-    minAngle = 10
-    maxAngle = 150
-
+    R = 15 # Downward angular velocity activation threshold (hands)
+    T = -7 # Downward vertical velocity activation threshold
+    minAngle = 10 # Min angle for angle check
+    maxAngle = 150 # Max angle for angle check
 
     if limb.tail.vis < visMin and limb.head.vis < visMin:
         return False
@@ -238,7 +268,7 @@ def hitCheck(limb):
     # Update limb angles
     limb.addAngle()
 
-    if len(limb.angVel) < 2:
+    if len(limb.dVert) < 2:
         return False
 
     # Prep hit check from extremity angle behavior
@@ -249,17 +279,18 @@ def hitCheck(limb):
     h2 = limb.dVert[-1]
 
     # Boolean Checks for hit criteria
-    leftHit = minAngle < a < maxAngle and v1 < -R and v2 > (0.5 * v1) # Interrupted downward spike in angular velocity
-    rightHit = (-1 * maxAngle) < a < minAngle and v1 > R and v2 < (0.5 * v1) # Interrupted upward spike in angular velocity
-    midHit = (abs(a) < minAngle or abs(a) > maxAngle) and h1 < S and h2 > (0.5 * h1)
+    leftHit = minAngle < a < maxAngle and v1 < -R and v2 > (0.5 * v1) # Sudden minimum in angular velocity
+    rightHit = (-1 * maxAngle) < a < minAngle and v1 > R and v2 < (0.5 * v1) # Sudden maximum in in angular velocity
+    altHit = h1 < T and h2 > 0.5 * h1 # Sudden minimum in vertical velocity
 
-    if leftHit or rightHit or midHit:
+    # if leftHit or rightHit or midHit:
+    if leftHit or rightHit or altHit:
         return True
     else:
         return False
 
 
-def map(extremity, rowRanges, colRanges):
+def map(extremity, rowRanges, colRanges, soundCodes):
     
     x = extremity.head.x
     y = extremity.head.y
@@ -281,31 +312,9 @@ def map(extremity, rowRanges, colRanges):
             return False
 
     # Map to drum code
-    soundCodes = [['On', 'Off'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
-
     mapVal = soundCodes[rowMap][colMap]
 
     return mapVal
-
-
-def audio(mapNum):
-
-    # Audio dictionary
-    sounds = {
-        'Ride': "./Motion-Project/Drum Sounds/Samples/ride-acoustic01.wav",
-        'Tom1': "./Motion-Project/Drum Sounds/Samples/tom-acoustic01.wav",
-        'Tom2': "./Motion-Project/Drum Sounds/Samples/tom-acoustic02.wav",
-        'Hat': "./Motion-Project/Drum Sounds/Samples/hihat-plain.wav",
-        'HatOpen': "./Motion-Project/Drum Sounds/Samples/openhat-analog.wav",
-        'Crash': "./Motion-Project/Drum Sounds/Samples/crash-acoustic.wav",
-        'FTom': "./Motion-Project/Drum Sounds/Samples/tom-rototom.wav",
-        'SD': "./Motion-Project/Drum Sounds/Samples/snare-acoustic01.wav",
-        'BD': "./Motion-Project/Drum Sounds/Samples/kick-classic.wav",
-        'On': './Motion-Project/Drum Sounds/Samples/clap-808.wav',
-        'Off': './Motion-Project/Drum Sounds/Samples/cowbell-808.wav'
-    }
-
-    playsound(sounds[mapNum], block = False)
 
 
 ####################################################
@@ -315,25 +324,27 @@ cap = cv2.VideoCapture(0)
 capWidth = cap.get(3) #640
 capHeight = cap.get(4) #480
 
-windowWidth = 800
-windowHeight = 600
+windowWidth = 3*int(capWidth)
+windowHeight = 3*int(capHeight)
+
+cv2.namedWindow("Motion Cap", cv2.WINDOW_NORMAL)
+# cv2.moveWindow("Motion Cap", 480, 240)
+cv2.resizeWindow("Motion Cap", windowWidth, windowHeight)
 
 xGrid = []
 yGrid = []
 
 limbs = PoseDetection()
 
-for item in limbs:
-    plt.subplot(2,2,1)
-    plt.plot([x for x in range(len(item.angle))], item.angle, label = "angle")
-    plt.subplot(2,2,2)
-    plt.plot([x for x in range(len(item.angVel))], item.angVel, label = "theta")
-    plt.subplot(2,2,3)
-    plt.plot([x for x in range(len(item.vert))], item.vert, label = "vert")
-    plt.subplot(2,2,4)
-    plt.plot([x for x in range(len(item.dVert))], item.dVert, label = "dVert")
-
-
+# for item in limbs:
+#     plt.subplot(2,2,1)
+#     plt.plot([x for x in range(len(item.angle))], item.angle, label = "angle")
+#     plt.subplot(2,2,2)
+#     plt.plot([x for x in range(len(item.angVel))], item.angVel, label = "theta")
+#     plt.subplot(2,2,3)
+#     plt.plot([x for x in range(len(item.vert))], item.vert, label = "vert")
+#     plt.subplot(2,2,4)
+#     plt.plot([x for x in range(len(item.dVert))], item.dVert, label = "dVert")
 
 plt.show()
 
