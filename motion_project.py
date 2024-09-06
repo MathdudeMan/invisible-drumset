@@ -1,12 +1,14 @@
 import cv2
 import mediapipe as mp
 from math import degrees, atan2
-import matplotlib.pyplot as plt
 from playsound import playsound
-import sounddevice as sd
-import soundfile as sf
+import tkinter as tk
+import numpy as np
 
-# sd.RawOutputStream(latency = 'low')
+# import matplotlib.pyplot as plt
+# import sounddevice as sd
+# import soundfile as sf
+
 
 class node:
     def __init__(self, loc = int):
@@ -14,6 +16,11 @@ class node:
         self.x = float
         self.y = float
         self.vis = float
+
+    def updateNode(self, dic = {}):
+        self.x = dic[self.loc]['x']
+        self.y = dic[self.loc]['y']
+        self.vis = dic[self.loc]['vis']
 
 
 class extremity:
@@ -48,7 +55,6 @@ class extremity:
             deltaY = self.vert[-1] - self.vert[-2]
             self.dVert.append(deltaY)
             
-
         if len(self.dVert) > 3:
             self.angle.pop(0)
             self.angVel.pop(0)
@@ -62,14 +68,10 @@ def PoseDetection():
     mp_pose = mp.solutions.pose
     mp_drawing = mp.solutions.drawing_utils
     # FIXME mp_drawing_styles = mp.solutions.drawing_styles
-
+    
     # Init video pose object
     vid_pose = mp_pose.Pose()
-
-    # Loading image
-    loading = cv2.imread('Motion-Project/icon.png')
-    loading = cv2.resize(loading, (windowWidth, windowHeight))
-
+    
     #init landmark dictionary
     coordinate = dict.fromkeys(['x','y','z','vis'], None)
     dic = dict.fromkeys(range(33), coordinate)
@@ -107,71 +109,64 @@ def PoseDetection():
 
     # Audio mapping grid
     soundCodes = [['On', 'Off'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
-
     activeSound = False
-            
+
+    # Default border color
+    borderColor = (0, 0, 255)
+    
 
     # Main loop
     while True:
 
-        # Read & process image
+        # Read image
         success, frame = cap.read()
         if not success:
             break
 
-        frame = cv2.resize(frame, (windowWidth, windowHeight))
+        frame = cv2.resize(frame, (capWidth, capHeight))
         imgRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = vid_pose.process(imgRGB)
 
-        # Read all landmarks
+        # Process image for body landmarks
+        results = vid_pose.process(imgRGB)
         landmarks = results.pose_landmarks
 
         if landmarks == None:
             continue
 
+        # Draw landmarks
+        mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS, 
+                                landmark_drawing_spec = mp_drawing.DrawingSpec(color = (255,255,255), thickness = 2, circle_radius = 2), 
+                                connection_drawing_spec = mp_drawing.DrawingSpec(color = (255,0,255), thickness = 2, circle_radius = 1))
+
         # Get hand / foot landmarks
         for mark in range(33):
 
             data_point = landmarks.landmark[mark]
-
             dic[mark] = {
                 'x': data_point.x,
                 'y': data_point.y,
                 'z': data_point.z,
                 'vis': data_point.visibility}
     
-        # Torso update
+        # Torso update / visibility check
         inFrame = True
-
         for item in torso:
 
-            updateNode(item, dic)
-
-            # Torso visibility check
+            item.updateNode(dic)
             if item.vis < 0.5:
                 inFrame = False
-        
-        if inFrame == False:
+                
 
-            cv2.imshow("Motion Cap", loading)
-
-        else:
-
-            # Draw landmarks
-            mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS, landmark_drawing_spec = mp_drawing.DrawingSpec(color = (255,255,255), thickness = 2, circle_radius = 2), connection_drawing_spec = mp_drawing.DrawingSpec(color = (255,0,255), thickness = 2, circle_radius = 1))
-
-            # Show frame
-            cv2.imshow("Motion Cap", frame)
+        # SoundCheck
+        if inFrame == True:
 
             gridRows, gridColumns = updateGrid(torso)
-
-            activeSound = True
 
             for item in limbs:
 
                 # Update extremity vector locations, visibility
-                updateNode(item.tail, dic)
-                updateNode(item.head, dic)
+                item.tail.updateNode(dic)
+                item.head.updateNode(dic)
 
                 # Check for limb hit
                 isHit = hitCheck(item)
@@ -186,57 +181,44 @@ def PoseDetection():
 
                     elif mapVal == 'On':
                         activeSound = True
+                        borderColor = (255, 0, 0)
 
                     elif mapVal == 'Off':
                         activeSound = False
+                        borderColor = (0, 255, 0)
                         playsound(sounds[mapVal], block = False)
 
                     elif mapVal == 'Hat' and leftFoot.head.vis > 0.5 and abs(leftFoot.angle[-1]) > 90:
                         mapVal == 'HatOpen'
                   
 
-                    # Play associated Audio
+                    # Play mapped Audio
                     if activeSound == True:
-                        # playsound(sounds[mapVal], block = False)
-                        # file = sounds[mapVal]
-                        data, fs = sf.read(sounds[mapVal], dtype='float32')  
-                        sd.play(data, fs)
+                        playsound(sounds[mapVal], block = False)
 
-                    # TODO remove for reference
+                    # TODO REFERENCE - Remove before deployment
                     print("hit", mapVal, item.dVert[-1])
 
+        # Border initialization
+        top = int(0.05 * frame.shape[0])  # shape[0] = rows
+        bottom = top
+        left = int(0.05 * frame.shape[1])  # shape[1] = cols
+        right = left
+
+        frame = cv2.copyMakeBorder(frame, top, bottom, left, right, cv2.BORDER_CONSTANT, None, borderColor)
+
+        # Show frame
+        cv2.imshow("Motion Cap", frame)
+
         # Press Q on keyboard to exit, else wait 3ms
-        if cv2.waitKey(3) & 0xFF == ord('q'):
+        if cv2.waitKey(3) & False:
             break
+
+        # Cancel when window closed
         if cv2.getWindowProperty('Motion Cap', cv2.WND_PROP_VISIBLE) < 1:
             break
 
     return limbs
-
-
-def updateGrid(torso):
-# Calculate hit grid from torso points
-# hitGrid: [['On', 'Off'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
-
-    # Reinitialize torso points
-    leftShoulder = torso[0]
-    rightShoulder = torso[1]
-    leftHip = torso[2]
-    rightHip = torso[3]
-
-    # Calculate reference locations
-    # TODO Explain grid in ReadMe
-    waistY = avg(leftHip.y, rightHip.y)
-    shoulderY = avg(leftShoulder.y, rightShoulder.y)
-    torsoHalf = (waistY - shoulderY) / 2
-    waistDisp = leftHip.x - rightHip.x
-    midX = avg(leftHip.x, rightHip.x)
-
-    # Calculate endpoints / midpoints of hit grid
-    rowRanges = [0, shoulderY - torsoHalf, waistY - torsoHalf, waistY + torsoHalf, 1]
-    colRanges = [[0, midX, 1], [0, rightShoulder.x - waistDisp, rightHip.x, leftHip.x, leftShoulder.x + waistDisp / 2, 1], [0, rightShoulder.x, leftHip.x, leftHip.x + waistDisp, 1], [0, midX, 1]]
-
-    return rowRanges, colRanges
 
 
 def avg(x, y):
@@ -244,14 +226,6 @@ def avg(x, y):
 
     average = (x + y) / 2
     return average
-
-
-def updateNode(node, dic = {}):
-# Update values of a node from results dictionary
-
-    node.x = dic[node.loc]['x']
-    node.y = dic[node.loc]['y']
-    node.vis = dic[node.loc]['vis']
 
 
 def hitCheck(limb):
@@ -290,6 +264,31 @@ def hitCheck(limb):
         return False
 
 
+def updateGrid(torso):
+# Calculate hit grid from torso points
+# hitGrid: [['On', 'Off'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
+
+    # Reinitialize torso points
+    leftShoulder = torso[0]
+    rightShoulder = torso[1]
+    leftHip = torso[2]
+    rightHip = torso[3]
+
+    # Calculate reference locations
+    # TODO Explain grid in ReadMe
+    waistY = avg(leftHip.y, rightHip.y)
+    shoulderY = avg(leftShoulder.y, rightShoulder.y)
+    torsoHalf = (waistY - shoulderY) / 2
+    waistDisp = leftHip.x - rightHip.x
+    midX = avg(leftHip.x, rightHip.x)
+
+    # Calculate endpoints / midpoints of hit grid
+    rowRanges = [0, shoulderY - torsoHalf, waistY - torsoHalf, waistY + torsoHalf, 1]
+    colRanges = [[0, midX, 1], [0, rightShoulder.x - waistDisp, rightHip.x, leftHip.x, leftShoulder.x + waistDisp / 2, 1], [0, rightShoulder.x, leftHip.x, leftHip.x + waistDisp, 1], [0, midX, 1]]
+
+    return rowRanges, colRanges
+
+
 def map(extremity, rowRanges, colRanges, soundCodes):
     
     x = extremity.head.x
@@ -297,6 +296,9 @@ def map(extremity, rowRanges, colRanges, soundCodes):
 
     rowMap = int
     colMap = int
+
+    if 0.05 < y < 0.15 and 0.05 < x < 0.15:
+        return 'button'
 
     # Map Row, then Column of extremity head
     for i in range(len(rowRanges) - 1):
@@ -316,16 +318,31 @@ def map(extremity, rowRanges, colRanges, soundCodes):
 
     return mapVal
 
+def overlay(frame):
+    cv2.rectangle(frame, (420, 205), (595, 385),
+    (0, 0, 255), -1)
+    cv2.putText(frame, "Player not fully in frame.", (windowWidth / 2, windowHeight / 2), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+
+    cv2.rectangle(frame, (10,30), (60, 80), (0,0,0), -1)
+    cv2.putText(frame, "On", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 3)
 
 ####################################################
 
 # Activate Video / Webcam
 cap = cv2.VideoCapture(0)
-capWidth = cap.get(3) #640
-capHeight = cap.get(4) #480
+capWidth = int(cap.get(3)) #640
+capHeight = int(cap.get(4)) #480
 
-windowWidth = 3*int(capWidth)
-windowHeight = 3*int(capHeight)
+# Get active window size
+root = tk.Tk()
+windowWidth, windowHeight = root.winfo_screenwidth(), root.winfo_screenheight()
+
+# Scale camera output value
+a = windowWidth / capWidth
+b = 1920 / 1440
+scale = min((windowWidth / capWidth), (windowHeight / capHeight))
+capWidth = int(capWidth * scale)
+capHeight = int(capHeight * scale)
 
 cv2.namedWindow("Motion Cap", cv2.WINDOW_NORMAL)
 # cv2.moveWindow("Motion Cap", 480, 240)
@@ -346,7 +363,7 @@ limbs = PoseDetection()
 #     plt.subplot(2,2,4)
 #     plt.plot([x for x in range(len(item.dVert))], item.dVert, label = "dVert")
 
-plt.show()
+# plt.show()
 
 cap.release()
 cv2.destroyAllWindows()
