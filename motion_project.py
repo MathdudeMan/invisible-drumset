@@ -155,8 +155,7 @@ def PoseDetection():
             item.updateNode(dic)
             if item.vis < 0.5:
                 inFrame = False
-                
-
+        
         # SoundCheck
         if inFrame == True:
 
@@ -245,7 +244,7 @@ def hitCheck(limb):
     if len(limb.dVert) < 2:
         return False
 
-    # Prep hit check from extremity angle behavior
+    # Locate extremity angle behavior for hit check calculations
     a = limb.angle[-1]
     v1 = limb.angVel[-2]
     v2 = limb.angVel[-1]
@@ -272,8 +271,7 @@ def updateGrid(torso):
     leftShoulder = torso[0]
     rightShoulder = torso[1]
     leftHip = torso[2]
-    rightHip = torso[3]
-
+    rightHip = torso[4]
     # Calculate reference locations
     # TODO Explain grid in ReadMe
     waistY = avg(leftHip.y, rightHip.y)
@@ -335,18 +333,16 @@ capHeight = int(cap.get(4)) #480
 
 # Get active window size
 root = tk.Tk()
-windowWidth, windowHeight = root.winfo_screenwidth(), root.winfo_screenheight()
+windowWidth, windowHeight = int(root.winfo_screenwidth()), int(root.winfo_screenheight())
 
 # Scale camera output value
-a = windowWidth / capWidth
-b = 1920 / 1440
-scale = min((windowWidth / capWidth), (windowHeight / capHeight))
+scale = max((windowWidth / capWidth), (windowHeight / capHeight))
 capWidth = int(capWidth * scale)
 capHeight = int(capHeight * scale)
 
-cv2.namedWindow("Motion Cap", cv2.WINDOW_NORMAL)
-# cv2.moveWindow("Motion Cap", 480, 240)
-cv2.resizeWindow("Motion Cap", windowWidth, windowHeight)
+cv2.namedWindow("Motion Cap", cv2.WINDOW_GUI_NORMAL)
+cv2.moveWindow("Motion Cap", 30, 40)
+cv2.resizeWindow("Motion Cap", capWidth, capHeight)
 
 xGrid = []
 yGrid = []
