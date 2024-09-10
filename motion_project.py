@@ -92,7 +92,7 @@ def PoseDetection():
 
     limbs = [leftHand, rightHand, leftFoot, rightFoot]
     
-    # Audio dictionary
+    # Audio dictionary FIXME
     sounds = {
         'Ride': "./Motion-Project/Drum Sounds/Samples/ride-acoustic01.wav",
         'Tom1': "./Motion-Project/Drum Sounds/Samples/tom-acoustic01.wav",
@@ -103,16 +103,18 @@ def PoseDetection():
         'FTom': "./Motion-Project/Drum Sounds/Samples/tom-rototom.wav",
         'SD': "./Motion-Project/Drum Sounds/Samples/snare-acoustic01.wav",
         'BD': "./Motion-Project/Drum Sounds/Samples/kick-classic.wav",
-        'On': './Motion-Project/Drum Sounds/Samples/clap-808.wav',
-        'Off': './Motion-Project/Drum Sounds/Samples/cowbell-808.wav'
+        'Special1': './Motion-Project/Drum Sounds/Samples/clap-808.wav',
+        'Special2': './Motion-Project/Drum Sounds/Samples/cowbell-808.wav',
+        'Off': './Motion-Project/Drum Sounds/Samples/clap-808.wav',
+        'On': './Motion-Project/Drum Sounds/Samples/cowbell-808.wav'
     }
 
     # Audio mapping grid
-    soundCodes = [['On', 'Off'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
+    soundCodes = [['Special1', 'Special2'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
     activeSound = False
 
     # Default border color
-    borderColor = (0, 0, 255)
+    borderColor = (50, 90, 0)
     
 
     # Main loop
@@ -126,6 +128,9 @@ def PoseDetection():
         frame = cv2.resize(frame, (capWidth, capHeight))
         imgRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
+        height = frame.shape[0]
+        width = frame.shape[1]
+
         # Process image for body landmarks
         results = vid_pose.process(imgRGB)
         landmarks = results.pose_landmarks
@@ -138,7 +143,7 @@ def PoseDetection():
                                 landmark_drawing_spec = mp_drawing.DrawingSpec(color = (255,255,255), thickness = 2, circle_radius = 2), 
                                 connection_drawing_spec = mp_drawing.DrawingSpec(color = (255,0,255), thickness = 2, circle_radius = 1))
 
-        # Get hand / foot landmarks
+        # Store hand / foot landmarks
         for mark in range(33):
 
             data_point = landmarks.landmark[mark]
@@ -147,6 +152,9 @@ def PoseDetection():
                 'y': data_point.y,
                 'z': data_point.z,
                 'vis': data_point.visibility}
+            
+        # Flip frame to mirror individual
+        frame = cv2.flip(frame, 1)
     
         # Torso update / visibility check
         inFrame = True
@@ -170,6 +178,7 @@ def PoseDetection():
                 # Check for limb hit
                 isHit = hitCheck(item)
 
+                # FIXME Reorder this
                 if isHit == True:
 
                     mapVal = map(item, gridRows, gridColumns, soundCodes)
@@ -178,40 +187,85 @@ def PoseDetection():
                     if mapVal == False:
                         break
 
-                    elif mapVal == 'On':
-                        activeSound = True
-                        borderColor = (255, 0, 0)
-
-                    elif mapVal == 'Off':
-                        activeSound = False
-                        borderColor = (0, 255, 0)
-                        playsound(sounds[mapVal], block = False)
+                    elif mapVal == 'Button':
+                        if activeSound == True:
+                            activeSound = False
+                            playsound(sounds['Off'], block = False)
+                        else:
+                            activeSound = True
+                            mapVal = 'On'
 
                     elif mapVal == 'Hat' and leftFoot.head.vis > 0.5 and abs(leftFoot.angle[-1]) > 90:
                         mapVal == 'HatOpen'
                   
-
                     # Play mapped Audio
                     if activeSound == True:
                         playsound(sounds[mapVal], block = False)
 
-                    # TODO REFERENCE - Remove before deployment
+                    # FIXME REFERENCE - Remove before deployment
                     print("hit", mapVal, item.dVert[-1])
 
+
+            # Setting up on/off GUI parameters
+            if activeSound == True:
+                stateText = "Power: ON"
+                btnBG = (20,20,20)
+                btnTxtColor = (240, 240, 255)
+                borderColor = (0, 255, 0)
+            elif activeSound == False:
+                stateText = "Power: OFF"
+                btnBG = (80,80,80)
+                btnTxtColor = (200, 200, 255)
+                borderColor = (0, 0, 255)
+
+
+        else: # inFrame == False -> Draw wait messages
+
+            activeSound = False
+            borderColor = (50, 90, 0)
+
+            # "Invisible Drum Kit" Title
+            frame = cv2.putText(frame, "Invisible Drum Kit", (int(0.35 * width), int(0.1 * height)), cv2.FONT_HERSHEY_SIMPLEX, 
+                                fontScale = 4, color = (0,0,0), thickness = 6, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
+            frame = cv2.putText(frame, "Inspired by Rowan Atkinson", (int(0.4 * width), int(0.15 * height)), cv2.FONT_HERSHEY_SIMPLEX, 
+                                fontScale = 2, color = (0,0,0), thickness = 6, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
+
+
+            # "Full Body Not in Frame" Message
+            tL = (int(0.2 * width), int(0.86 * height))
+            bR = (int(0.8 * width), int(0.95 * height))
+            frame = cv2.rectangle(frame, tL, bR, color = (0,0,200), thickness = -1)
+            
+            frame = cv2.putText(frame, "Full Body Not In Frame", (int(0.212 * width), int(0.925 * height)), cv2.FONT_HERSHEY_SIMPLEX, 
+                                fontScale = 3, color = (255,255,255), thickness = 6, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
+
+
+        # On/Off Button
+        tL = (int(0.025 * width), int(0.025 * height))
+        bR = (int(0.25 * width), int(0.15 * height))
+        frame = cv2.rectangle(frame, tL, bR, color = btnBG, thickness = -1)
+
+
+        frame = cv2.putText(frame, stateText, (int(0.045 * width), int(0.08 * height)), cv2.FONT_HERSHEY_SIMPLEX, 
+                                fontScale = 2, color = btnTxtColor, thickness = 2, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
+
+        frame = cv2.putText(frame, "(Hit Here to Switch)", (int(0.045 * width), int(0.12 * height)), cv2.FONT_HERSHEY_SIMPLEX, 
+                                fontScale = 1, color = btnTxtColor, thickness = 2, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
+
+
         # Border initialization
-        top = int(0.05 * frame.shape[0])  # shape[0] = rows
+        top = int(0.05 * height)
         bottom = top
-        left = int(0.05 * frame.shape[1])  # shape[1] = cols
+        left = int(0.05 * width)
         right = left
 
         frame = cv2.copyMakeBorder(frame, top, bottom, left, right, cv2.BORDER_CONSTANT, None, borderColor)
 
         # Show frame
-        cv2.imshow("Motion Cap", frame)
+        cv2.imshow('Motion Cap', frame)
 
-        # Press Q on keyboard to exit, else wait 3ms
-        if cv2.waitKey(3) & False:
-            break
+        # Wait 3ms
+        cv2.waitKey(3)
 
         # Cancel when window closed
         if cv2.getWindowProperty('Motion Cap', cv2.WND_PROP_VISIBLE) < 1:
@@ -265,15 +319,15 @@ def hitCheck(limb):
 
 def updateGrid(torso):
 # Calculate hit grid from torso points
-# hitGrid: [['On', 'Off'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
+# hitGrid: [['Special1', 'Special2'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
 
     # Reinitialize torso points
     leftShoulder = torso[0]
     rightShoulder = torso[1]
     leftHip = torso[2]
-    rightHip = torso[4]
+    rightHip = torso[3]
+
     # Calculate reference locations
-    # TODO Explain grid in ReadMe
     waistY = avg(leftHip.y, rightHip.y)
     shoulderY = avg(leftShoulder.y, rightShoulder.y)
     torsoHalf = (waistY - shoulderY) / 2
@@ -295,8 +349,8 @@ def map(extremity, rowRanges, colRanges, soundCodes):
     rowMap = int
     colMap = int
 
-    if 0.05 < y < 0.15 and 0.05 < x < 0.15:
-        return 'button'
+    if 0.025 < x < 0.25 and 0.025 < y < 0.15:
+        return 'Button'
 
     # Map Row, then Column of extremity head
     for i in range(len(rowRanges) - 1):
@@ -316,14 +370,6 @@ def map(extremity, rowRanges, colRanges, soundCodes):
 
     return mapVal
 
-def overlay(frame):
-    cv2.rectangle(frame, (420, 205), (595, 385),
-    (0, 0, 255), -1)
-    cv2.putText(frame, "Player not fully in frame.", (windowWidth / 2, windowHeight / 2), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
-
-    cv2.rectangle(frame, (10,30), (60, 80), (0,0,0), -1)
-    cv2.putText(frame, "On", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 3)
-
 ####################################################
 
 # Activate Video / Webcam
@@ -341,7 +387,7 @@ capWidth = int(capWidth * scale)
 capHeight = int(capHeight * scale)
 
 cv2.namedWindow("Motion Cap", cv2.WINDOW_GUI_NORMAL)
-cv2.moveWindow("Motion Cap", 30, 40)
+# cv2.moveWindow("Motion Cap", 30, 40)
 cv2.resizeWindow("Motion Cap", capWidth, capHeight)
 
 xGrid = []
@@ -349,6 +395,7 @@ yGrid = []
 
 limbs = PoseDetection()
 
+# FIXME Extremity behavior testing
 # for item in limbs:
 #     plt.subplot(2,2,1)
 #     plt.plot([x for x in range(len(item.angle))], item.angle, label = "angle")
