@@ -39,7 +39,7 @@ When a hit is registered, the program then uses the location of that extremity i
 
 Within the program, this location mapping is done using a "hit grid." The hit grid holds the ranges of where a drum kit's components would be relative to a user's present static location in the camera frame, and it is recalculated framewise based on the positions of the user's torso nodes with the function "updateGrid()". See the following image for how this grid is mapped.
 
-![Hit Grid]()
+![Hit Grid](./Grid_Diagram.jpg)
 
 ## Licensing
 
