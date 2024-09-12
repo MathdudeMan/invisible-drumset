@@ -3,11 +3,11 @@ import mediapipe as mp
 from math import degrees, atan2
 from playsound import playsound
 import tkinter as tk
-import numpy as np
 
 import matplotlib.pyplot as plt
 # import sounddevice as sd
 # import soundfile as sf
+# import pygame.mixer as pg
 
 
 class node:
@@ -24,8 +24,10 @@ class node:
 
 
 class extremity:
-    def __init__(self, tail = int, head = int):
+    def __init__(self, tail = int, head = int, type = ''):
         
+        self.type = type # Possible values 'Hand' and 'Foot'
+
         # Tail and head of foot / hand vector, pointed outward from base of extremity
         self.tail = node(tail)
         self.head = node(head)
@@ -85,10 +87,10 @@ def PoseDetection():
     torso = [leftShoulder, rightShoulder, leftHip, rightHip]
 
     # Limb definitions
-    leftHand = extremity(15, 17)
-    rightHand = extremity(16, 18)
-    leftFoot = extremity(29, 31)
-    rightFoot = extremity(30, 32)
+    leftHand = extremity(15, 17, 'Hand')
+    rightHand = extremity(16, 18, 'Hand')
+    leftFoot = extremity(29, 31, 'Foot')
+    rightFoot = extremity(30, 32, 'Foot')
 
     limbs = [leftHand, rightHand, leftFoot, rightFoot]
     
@@ -156,7 +158,7 @@ def PoseDetection():
                 'z': data_point.z,
                 'vis': data_point.visibility}
             
-        # Flip frame to mirror individual
+        # Flip frame to mirror player
         frame = cv2.flip(frame, 1)
     
         # Torso update / visibility check
@@ -185,9 +187,6 @@ def PoseDetection():
                 if isHit == True:
 
                     mapVal = map(item, gridRows, gridColumns, soundCodes)
-
-                    # FIXME REFERENCE - Remove before deployment
-                    print("hit", mapVal, item.dVert[-1])
                   
                     # Mapping adjustments
                     if mapVal == False:
@@ -208,7 +207,12 @@ def PoseDetection():
                     if activeSound == True:
                         playsound(sounds[mapVal], block = False)
 
-                # Set drawing parameters
+
+                    # FIXME REFERENCE - Remove before deployment
+                    print("hit", mapVal, item.dVert[-1])
+
+
+                # Set inFrame drawing parameters
                 if activeSound == True:
                     borderColor = (0, 255, 0)
                     stateText = "Power: ON"
@@ -227,7 +231,7 @@ def PoseDetection():
 
             activeSound = False
 
-            # Set drawing parameters
+            # Set notInFrame drawing parameters
             borderColor = (50, 90, 0)
             stateText = "Power: OFF"
             altText = "(Enter Frame to Use)"
@@ -241,7 +245,7 @@ def PoseDetection():
                                 fontScale = 2, color = (0,0,0), thickness = 6, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
 
             # "Full Body Not in Frame" Message
-            tL = (int(0.2 * width), int(0.86 * height))
+            tL = (int(0.2 * width), int(0.85 * height))
             bR = (int(0.8 * width), int(0.95 * height))
             frame = cv2.rectangle(frame, tL, bR, color = (0,0,200), thickness = -1)
             
@@ -249,7 +253,7 @@ def PoseDetection():
                                 fontScale = 3, color = (255,255,255), thickness = 6, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
 
 
-        # On/Off Button
+        # Draw On/Off Button
         tL = (int(0.025 * width), int(0.025 * height))
         bR = (int(0.25 * width), int(0.15 * height))
         frame = cv2.rectangle(frame, tL, bR, color = btnBG, thickness = -1)
@@ -288,54 +292,6 @@ def avg(x, y):
     return average
 
 
-def hitCheck(limb):
-
-    visMin = 0.5 # Minimum visibility value for hit
-    R = 20 # Downward angular velocity activation threshold (hands)
-    T = -7 # Downward vertical velocity activation threshold
-    minAngle = 20 # Min angle for angle check
-    maxAngle = 160 # Max angle for angle check
-
-    if limb.tail.vis < visMin and limb.head.vis < visMin:
-        return False
-
-    # Update limb angles
-    limb.addAngle()
-
-    if len(limb.dVert) < 2:
-        return False
-
-    # Locate extremity angle behavior for hit check calculations
-    a = limb.angle[-1]
-    v1 = limb.angVel[-2]
-    v2 = limb.angVel[-1]
-    h1 = limb.dVert[-2]
-    h2 = limb.dVert[-1]
-
-    # Protects from false positives due to axis crossing
-    if abs(v1) > 330 or abs(v2) > 330:
-        return False
-
-    # Boolean Checks for hit criteria
-    leftHit = minAngle < a < maxAngle and v1 < -R and v2 > (0.5 * v1) # Sharp minimum in angular velocity
-    rightHit = (-1 * maxAngle) < a < (-1 * minAngle) and v1 > R and v2 < (0.5 * v1) # Sharp maximum in angular velocity
-    altHit = (abs(a) < minAngle or abs(a) > maxAngle) and h1 < T and h2 > 0.5 * h1 # Ssharp minimum in vertical velocity with vertical extremity
-    #sideHit?
-
-    # altHit = False
-
-    # if leftHit or rightHit or midHit:
-    if leftHit or rightHit or altHit:
-        
-        print(leftHit)
-        print(rightHit)
-        print(altHit)
-
-        return True
-    else:
-        return False
-
-
 def updateGrid(torso):
 # Calculate hit grid from torso points
 # hitGrid: [['Special1', 'Special2'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
@@ -346,18 +302,73 @@ def updateGrid(torso):
     leftHip = torso[2]
     rightHip = torso[3]
 
-    # Calculate reference locations
+    # Reference Y Values
     waistY = avg(leftHip.y, rightHip.y)
     shoulderY = avg(leftShoulder.y, rightShoulder.y)
     torsoSplit = (waistY - shoulderY) / 3
+
+    # Reference X Valuess
     waistDisp = leftHip.x - rightHip.x
     midX = avg(leftHip.x, rightHip.x)
 
     # Calculate endpoints / midpoints of hit grid
+    # Rows, Top to Bottom
     rowRanges = [0, shoulderY - torsoSplit, waistY - torsoSplit, waistY + torsoSplit, 1]
-    colRanges = [[0, midX, 1], [0, rightShoulder.x - waistDisp, rightHip.x, leftHip.x, leftShoulder.x + waistDisp / 2, 1], [0, rightShoulder.x, leftHip.x, leftHip.x + waistDisp, 1], [0, midX, 1]]
+    
+    # Sub-columns by Row, Right to Left
+    colRanges = [[0, midX, 1], 
+                 [0, rightShoulder.x - waistDisp, rightHip.x, leftShoulder.x, leftShoulder.x + waistDisp, 1], 
+                 [0, rightShoulder.x, leftShoulder.x, leftShoulder.x + waistDisp, 1], 
+                 [0, midX, 1]]
 
     return rowRanges, colRanges
+
+
+def hitCheck(limb):
+
+    visMin = 0.5 # Minimum visibility value for hit
+    wLim = 20 # Downward angular velocity activation threshold (for hands)
+    vLim = -7 # Downward vertical velocity activation threshold
+    minAngle = 20 # Min angle for angle check
+    maxAngle = 160 # Max angle for angle check
+
+    # Prevent hit from out-of-frame extremities
+    if limb.tail.vis < visMin and limb.head.vis < visMin:
+        return False
+
+    # Update limb angles
+    limb.addAngle()
+
+    # Prevent indexError
+    if len(limb.dVert) < 2:
+        return False
+
+    # Locate extremity angle behavior for hit check calculations
+    a = limb.angle[-1]
+    w1 = limb.angVel[-2]
+    w2 = limb.angVel[-1]
+    v1 = limb.dVert[-2]
+    v2 = limb.dVert[-1]
+
+    # Protects from false positives due to axis crossing
+    if abs(w1) > 330 or abs(w2) > 330:
+        return False
+
+    # Criteria for Vertical Velocity check
+    if limb.type == 'Hand':
+        alt = (abs(a) < minAngle or abs(a) > maxAngle or 85 < abs(a) < 95) 
+    elif limb.type == 'Foot':
+        alt = True
+
+    # Boolean Checks for hit criteria
+    leftHit = minAngle < a < maxAngle and w1 < -wLim and w2 > (0.5 * w1) # Sharp minimum in angular velocity
+    rightHit = (-1 * maxAngle) < a < (-1 * minAngle) and w1 > wLim and w2 < (0.5 * w1) # Sharp maximum in angular velocity
+    altHit = alt and v1 < vLim and v2 > 0.5 * v1 # Sharp minimum in vertical velocity
+
+    if leftHit or rightHit or altHit:
+        return True
+    else:
+        return False
 
 
 def map(extremity, rowRanges, colRanges, soundCodes):
@@ -409,7 +420,6 @@ capWidth = int(capWidth * scale)
 capHeight = int(capHeight * scale)
 
 cv2.namedWindow("Motion Cap", cv2.WINDOW_GUI_NORMAL)
-# cv2.moveWindow("Motion Cap", 30, 40)
 cv2.resizeWindow("Motion Cap", capWidth, capHeight)
 
 xGrid = []
