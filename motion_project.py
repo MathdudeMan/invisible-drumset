@@ -52,15 +52,18 @@ class extremity:
             dTheta = self.angle[-1] - self.angle[-2]
             self.angVel.append(dTheta)
 
-        # Update change in delta Y for vertical hit check
+        # Update change in delta-Y for vertical hit check
         self.vert.append(-1 * yDisp)
         if len(self.vert) > 1:
             deltaY = self.vert[-1] - self.vert[-2]
             self.dVert.append(deltaY)
         
-        if len(self.dVert) > 3:
+        # Angle / delta-Y queue cleanup
+        if len(self.angVel) > 3:
             self.angle.pop(0)
             self.angVel.pop(0)
+
+        if len(self.dVert) > 3:
             self.vert.pop(0)
             self.dVert.pop(0)
 
@@ -104,19 +107,19 @@ def PoseDetection():
     extremities = [leftHand, rightHand, leftFoot, rightFoot]
     
     sounds = {
-        'Ride': "./Motion-Project/Used_Audio/ride-acoustic01.wav",
-        'Tom1': "./Motion-Project/Used_Audio/tom-acoustic01.wav",
-        'Tom2': "./Motion-Project/Used_Audio/tom-acoustic02.wav",
-        'Hat': "./Motion-Project/Used_Audio/hihat-plain.wav",
-        'HatOpen': "./Motion-Project/Used_Audio/openhat-analog.wav",
-        'Crash': "./Motion-Project/Used_Audio/crash-acoustic.wav",
-        'FTom': "./Motion-Project/Used_Audio/tom-rototom.wav",
-        'SD': "./Motion-Project/Used_Audio/snare-acoustic01.wav",
-        'BD': "./Motion-Project/Used_Audio/kick-classic.wav",
-        'Special1': './Motion-Project/Used_Audio/clap-808.wav',
-        'Special2': './Motion-Project/Used_Audio/cowbell-808.wav',
-        'Off': './Motion-Project/Used_Audio/Cowbell.wav',
-        'On': './Motion-Project/Used_Audio/Cowbell.wav'
+        'Ride': "./Used_Audio/ride-acoustic02.wav",
+        'Tom1': "./Used_Audio/tom-acoustic01.wav",
+        'Tom2': "./Used_Audio/tom-acoustic02.wav",
+        'Hat': "./Used_Audio/hihat-acoustic01.wav",
+        'HatOpen': "./Used_Audio/hihat-dist02.wav",
+        'Crash': "./Used_Audio/crash-acoustic.wav",
+        'FTom': "./Used_Audio/tom-rototom.wav",
+        'SD': "./Used_Audio/snare-acoustic01.wav",
+        'BD': "./Used_Audio/kick-classic.wav",
+        'Special1': './Used_Audio/clap-808.wav',
+        'Special2': './Used_Audio/cowbell-808.wav',
+        'Off': './Used_Audio/Cowbell.wav',
+        'On': './Used_Audio/Cowbell.wav'
     }
 
     # Audio mapping grid
@@ -128,7 +131,13 @@ def PoseDetection():
     UIState = 'Out'
 
     # Declare button and x, y ranges within frame
-    powButton = button(0.025, 0.25, 0.025, 0.15)
+    powButton = button(0.025, 0.25, 0.025, 0.25)
+
+    # Button text location parameters
+    powX = 0.045
+    powY = 0.125
+    altX = 0.045
+    altY = 0.185
 
     # UI Variable declarations
     borderColor = (0,0,0)
@@ -212,8 +221,8 @@ def PoseDetection():
                         continue
 
                     # Open Hi Hat when left foot angled upwards
-                    elif mapVal == 'Hat' and extremities[2].head.vis > 0.5 and abs(extremities[2].angle[-1]) > 50:
-                        mapVal == 'HatOpen'
+                    elif mapVal == 'Hat' and extremities[2].head.vis > 0.5 and abs(extremities[2].angle[-1]) > 70:
+                        mapVal = 'HatOpen'
 
                     # Button trigger
                     elif mapVal == 'Button':
@@ -279,17 +288,19 @@ def PoseDetection():
                 altText = "(Enter Frame to Use)"
                 btnBG = (60,60,60)
                 btnTxtColor = (150, 150, 150)  
-          
+        
+
+
         
         # Draw On/Off Button
         tL = (int(powButton.x1 * width), int(powButton.y1 * height))
         bR = (int(powButton.x2 * width), int(powButton.y2 * height))
         frame = cv2.rectangle(frame, tL, bR, color = btnBG, thickness = -1)
 
-        frame = cv2.putText(frame, stateText, (int(0.045 * width), int(0.08 * height)), cv2.FONT_HERSHEY_SIMPLEX, 
+        frame = cv2.putText(frame, stateText, (int(powX * width), int(powY * height)), cv2.FONT_HERSHEY_SIMPLEX, 
                                 fontScale = 2, color = btnTxtColor, thickness = 2, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
 
-        frame = cv2.putText(frame, altText, (int(0.045 * width), int(0.12 * height)), cv2.FONT_HERSHEY_SIMPLEX, 
+        frame = cv2.putText(frame, altText, (int(altX * width), int(altY * height)), cv2.FONT_HERSHEY_SIMPLEX, 
                                 fontScale = 1, color = btnTxtColor, thickness = 2, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
 
         # Draw border
@@ -311,7 +322,7 @@ def PoseDetection():
         if cv2.getWindowProperty('Motion Cap', cv2.WND_PROP_VISIBLE) < 1:
             break
 
-
+    # FIXME
     return extremities
 
 
@@ -335,20 +346,20 @@ def updateGrid(torso):
     # Vertical references
     waistY = avg(leftHip.y, rightHip.y)
     shoulderY = avg(leftShoulder.y, rightShoulder.y)
-    torsoSplit = (1/3) * (waistY - shoulderY)
+    torsoSplitY = (1/3) * (waistY - shoulderY)
 
     # Horizontal references
     waistDisp = leftHip.x - rightHip.x
-    midX = avg(leftHip.x, rightHip.x)
+    torsoSplitX = avg(leftHip.x, rightHip.x)
 
     # Calculate rows endpoints, from Top to Bottom
-    rowRanges = [0, shoulderY - torsoSplit, waistY - torsoSplit, waistY + torsoSplit, 1]
+    rowRanges = [0, shoulderY - torsoSplitY, waistY - torsoSplitY, waistY + torsoSplitY, 1]
     
-    # Calculate sub-column endpoints by Row, from Right to Left (due to image flip)
-    colRanges = [[0, midX, 1], 
-                 [0, rightShoulder.x - waistDisp, rightHip.x, leftShoulder.x, leftShoulder.x + waistDisp, 1], 
+    # Calculate sub-column endpoints by Row, Top to Bottom and Right to Left (due to image flip)
+    colRanges = [[0, torsoSplitX, 1], 
+                 [0, rightShoulder.x - waistDisp, rightShoulder.x, torsoSplitX, leftShoulder.x + waistDisp, 1], 
                  [0, rightShoulder.x, leftShoulder.x, leftShoulder.x + waistDisp, 1], 
-                 [0, midX, 1]]
+                 [0, torsoSplitX, 1]]
 
     return rowRanges, colRanges
 
@@ -359,12 +370,14 @@ def hitCheck(extremity):
     visMin = 0.5 # Minimum visibility value for hit
 
     wLim = 20 # Downward angular velocity activation threshold (for hands)
-    vLim = -7 # Downward vertical velocity activation threshold
+    vLim = -10 # Downward vertical velocity activation threshold
 
     minAngle = 20 # Min angle for angle check
-    maxAngle = 160 # Max angle for hand angle check
+    maxAngle = 150 # Max angle for hand angle check
     midMin = 80 # Allow vert check for midrange hand hits
     midMax = 100
+
+    anglSwap = 300 # Min angle change to detect sign change (e.g. + to -)
 
     # Prevent false positives from out-of-frame extremities
     if extremity.tail.vis < visMin and extremity.head.vis < visMin:
@@ -384,8 +397,9 @@ def hitCheck(extremity):
     v1 = extremity.dVert[-2]
     v2 = extremity.dVert[-1]
 
-    # Prevent false positives due to angular axis crossing
-    if abs(w1) > 330 or abs(w2) > 330:
+    # Detect angle sign change
+    if abs(w2) > anglSwap:
+        extremity.angVel.pop(-1)
         return False
 
     # Criteria for enabling Vertical Velocity check
@@ -397,7 +411,7 @@ def hitCheck(extremity):
     # Boolean Checks for hit criteria
     leftHit = minAngle < a < maxAngle and w1 < -wLim and w2 > (0.5 * w1) # Sharp minimum in angular velocity
     rightHit = (-1 * maxAngle) < a < (-1 * minAngle) and w1 > wLim and w2 < (0.5 * w1) # Sharp maximum in angular velocity
-    altHit = alt and v1 < vLim and v2 > 0.4 * v1 # Sharp minimum in vertical velocity
+    altHit = alt and v1 < vLim and v2 > 0.3 * v1 # Sharp minimum in vertical velocity
 
     if leftHit or rightHit or altHit:
         return True
@@ -461,6 +475,7 @@ capHeight = int(capHeight * scale)
 cv2.namedWindow("Motion Cap", cv2.WINDOW_GUI_NORMAL)
 cv2.resizeWindow("Motion Cap", capWidth, capHeight)
 
+# FIXME
 extremities = PoseDetection()
 
 # FIXME Extremity behavior testing

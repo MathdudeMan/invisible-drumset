@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="140mm"
+   height="140mm"
+   viewBox="0 0 140 139.99999"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="hitAngles.svg"
+   inkscape:export-filename="hitAngles.jpg"
+   inkscape:export-xdpi="500"
+   inkscape:export-ydpi="500"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.2739"
+     inkscape:cx="220.58247"
+     inkscape:cy="267.28943"
+     inkscape:window-width="1920"
+     inkscape:window-height="1044"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg5" />
+  <defs
+     id="defs2">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient2612">
+      <stop
+         style="stop-color:#410ed5;stop-opacity:0.92932564;"
+         offset="0"
+         id="stop2608" />
+      <stop
+         style="stop-color:#058aff;stop-opacity:1;"
+         offset="1"
+         id="stop2610" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2612"
+       id="linearGradient2614"
+       x1="58.524475"
+       y1="137.74507"
+       x2="158.57878"
+       y2="137.74507"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(1.9712259,10.789396)" />
+  </defs>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Lines"
+     transform="translate(-39.692057,-78.564646)" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-39.692057,-78.564646)">
+    <ellipse
+       style="opacity:1;fill:url(#linearGradient2614);fill-opacity:1;stroke-width:0.264999;stroke-opacity:0.5"
+       id="path1877"
+       ry="49.689308"
+       rx="50.027153"
+       cy="148.53447"
+       cx="110.52285" />
+  </g>
+  <path
+     style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.765;stroke-dasharray:none;stroke-opacity:1"
+     d="M 20.72591,69.08587 H 120.88907"
+     id="path2315" />
+  <path
+     style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.762321;stroke-dasharray:none;stroke-opacity:1"
+     d="M 70.692719,20.276897 V 119.64459"
+     id="path2425" />
+  <text
+     xml:space="preserve"
+     style="font-size:8.81944px;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.765;stroke-dasharray:none;stroke-opacity:1"
+     x="66.683945"
+     y="128.73991"
+     id="text2481"><tspan
+       sodipodi:role="line"
+       id="tspan2479"
+       style="stroke-width:0.765"
+       x="66.683945"
+       y="128.73991">0°</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:8.81944px;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.765;stroke-dasharray:none;stroke-opacity:1"
+     x="124.26717"
+     y="72.332642"
+     id="text2535"><tspan
+       sodipodi:role="line"
+       id="tspan2533"
+       style="stroke-width:0.765"
+       x="124.26717"
+       y="72.332642">90°</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:8.81944px;white-space:pre;inline-size:16.9905;display:inline;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.765;stroke-dasharray:none;stroke-opacity:1"
+     x="43.30217"
+     y="134.60884"
+     id="text2539"
+     transform="translate(-41.301786,-62.916541)"><tspan
+       x="43.30217"
+       y="134.60884"
+       id="tspan3384">-90°</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:8.81944px;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.765;stroke-dasharray:none;stroke-opacity:1"
+     x="62.303841"
+     y="17.56599"
+     id="text2543"><tspan
+       sodipodi:role="line"
+       id="tspan2541"
+       style="stroke-width:0.765;font-weight:normal"
+       x="62.303841"
+       y="17.56599">180°</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:8.81944px;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.765;stroke-dasharray:none;stroke-opacity:1"
+     x="-22.00086"
+     y="69.208549"
+     id="text2547"><tspan
+       sodipodi:role="line"
+       id="tspan2545"
+       style="stroke-width:0.765"
+       x="-22.00086"
+       y="69.208549" /></text>
+</svg>

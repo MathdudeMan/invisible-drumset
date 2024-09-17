@@ -25,15 +25,15 @@ The "drum kit" is powered off by default. To activate the kit, perform the follo
 
 The app transitions between three different states, triggered by user behavior.
 
-1. User Offscreen. This displays the message "User Not In Frame."
-2. Power Off: User onscreen, but sound function not switched on.
-3. Power On: User onscreen with audio activated, triggered by the button in the top-left corner.
+1. User Offscreen. This displays the message "User Not In Frame." Triggered whenever torso exits the frame.
+2. Power Off: User onscreen, but sound function not switched on. Automatic setting upon user entering frame.
+3. Power On: User onscreen with audio activated. Triggered by "hitting" the button in the top-left corner.
 
 ### Mediapipe Pose
 
 Mediapipe Pose detects 32 standard nodes from the human body. The source code configures these as shown:
 
-![MediaPipe Nodes](./Nodes_Edit.png)
+![MediaPipe Nodes](./readme_images/Nodes_Edit.png)
 
 Further documentation on MediaPipe Pose may be found [here](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker).
 
@@ -41,7 +41,13 @@ Further documentation on MediaPipe Pose may be found [here](https://ai.google.de
 
 For every frame, the x, y, and visibility (0 - 1) parameters for each node in the torso and extremities (hands/feet) are saved. The `hitCheck()` function then calculates the angle, angular velocity, and vertical velocity for the extremity. If the angular or vertical velocity values of the limb have a sharp spike (delineated by fixed numeric criteria), this registers a "hit."
 
+For reference, `hitCheck()` calculates the extremity angles with the following degree plane:
+
+![Degree Circle](./readme_images/hitAngles.jpg)
+
 When a hit is registered, the program uses the location of the extremity relative to the rest of the body to map what drum or cymbal in the hypothetical drum kit was "hit." An appropriate drum or cymbal sound is triggered to match.
+
+Note that there is a buffer built in to the playsound library, so the audio playback for hits will be delayed.
 
 ### Hit Grid
 
@@ -49,12 +55,12 @@ The drum mapping is done using a "hit grid." The hit grid holds the x/y ranges o
 
 #### Hit Grid (After Image Mirroring):
 
-![Hit Grid](./Grid_Diagram.png)
+![Hit Grid](./readme_images/Grid_Diagram.png)
 
 This method allows accurate drum mapping regardless of the location or size of the user in the frame.
 
 ## Licensing
 
-All sound effects in this app are obtained from from ![Freesound.org](freesound.org), a repository for free and open source audio.
+All sound effects in this app are obtained from from ![Freesound.org](https://freesound.org/), a repository for free and open source audio.
 
 All rights reserved.
