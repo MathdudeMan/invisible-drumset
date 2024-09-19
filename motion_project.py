@@ -107,19 +107,19 @@ def PoseDetection():
     extremities = [leftHand, rightHand, leftFoot, rightFoot]
     
     sounds = {
-        'Ride': "./Used_Audio/ride-acoustic02.wav",
-        'Tom1': "./Used_Audio/tom-acoustic01.wav",
-        'Tom2': "./Used_Audio/tom-acoustic02.wav",
-        'Hat': "./Used_Audio/hihat-acoustic01.wav",
-        'HatOpen': "./Used_Audio/hihat-dist02.wav",
-        'Crash': "./Used_Audio/crash-acoustic.wav",
-        'FTom': "./Used_Audio/tom-rototom.wav",
-        'SD': "./Used_Audio/snare-acoustic01.wav",
-        'BD': "./Used_Audio/kick-classic.wav",
-        'Special1': './Used_Audio/clap-808.wav',
-        'Special2': './Used_Audio/cowbell-808.wav',
-        'Off': './Used_Audio/Cowbell.wav',
-        'On': './Used_Audio/Cowbell.wav'
+        'Ride': "./assets/Used_Audio/ride-acoustic02.wav",
+        'Tom1': "./assets/Used_Audio/tom-acoustic01.wav",
+        'Tom2': "./assets/Used_Audio/tom-acoustic02.wav",
+        'Hat': "./assets/Used_Audio/hihat-acoustic01.wav",
+        'HatOpen': "./assets/Used_Audio/hihat-dist02.wav",
+        'Crash': "./assets/Used_Audio/crash-acoustic.wav",
+        'FTom': "./assets/Used_Audio/tom-rototom.wav",
+        'SD': "./assets/Used_Audio/snare-acoustic01.wav",
+        'BD': "./assets/Used_Audio/kick-classic.wav",
+        'Special1': './assets/Used_Audio/clap-808.wav',
+        'Special2': './assets/Used_Audio/cowbell-808.wav',
+        'Off': './assets/Used_Audio/Cowbell.wav',
+        'On': './assets/Used_Audio/Cowbell.wav'
     }
 
     # Audio mapping grid
