@@ -63,4 +63,4 @@ This method allows accurate drum mapping regardless of the location or size of t
 
 All sound effects in this app are obtained from from ![Freesound.org](https://freesound.org/), a repository for free and open source audio.
 
-All rights reserved.
+This project is copyright protected by the MIT License.
