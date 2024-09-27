@@ -4,11 +4,11 @@ from math import degrees, atan2
 from playsound import playsound
 import tkinter as tk
 
+# Options for testing
 import matplotlib.pyplot as plt
 # import sounddevice as sd
 # import soundfile as sf
 # import pygame.mixer as pg
-
 
 class node:
     def __init__(self, loc = int):
@@ -21,6 +21,14 @@ class node:
         self.x = dic[self.loc]['x']
         self.y = dic[self.loc]['y']
         self.vis = dic[self.loc]['vis']
+
+
+class torso:
+    def __init__(self, lShoulder, rShoulder, lHip, rHip):
+        self.lShoulder = lShoulder
+        self.rShoulder = rShoulder
+        self.lHip = lHip
+        self.rHip = rHip
 
 
 class extremity:
@@ -41,8 +49,8 @@ class extremity:
     def addAngle(self):
         
         # Distances relative to screen (i.e. 0.0 - 1.0) converted to absolute distances
-        xDisp = capWidth * (self.head.x - self.tail.x)
-        yDisp = capHeight * (self.head.y - self.tail.y)
+        xDisp = windowWidth * (self.head.x - self.tail.x)
+        yDisp = windowHeight * (self.head.y - self.tail.y)
 
         # Angle value normalized to degree range -180 : 180, w. origin shifted to floor
         theta = degrees(atan2(xDisp, yDisp))
@@ -58,7 +66,7 @@ class extremity:
             deltaY = self.vert[-1] - self.vert[-2]
             self.dVert.append(deltaY)
         
-        # Angle / delta-Y queue cleanup
+        # Angle / delta-Y queue cleanup - comment out during data display 
         if len(self.angVel) > 3:
             self.angle.pop(0)
             self.angVel.pop(0)
@@ -75,8 +83,8 @@ class button:
         self.y1 = y1
         self.y2 = y2
 
-
-def PoseDetection():
+    
+def main():
 # Main Loop
 
     # Init mediapipe pose class
@@ -88,7 +96,7 @@ def PoseDetection():
     
     #init landmark dictionary
     coordinate = dict.fromkeys(['x','y','z','vis'], None)
-    dic = dict.fromkeys(range(33), coordinate)
+    dataDict = dict.fromkeys(range(33), coordinate)
 
     # Torso definitions
     leftShoulder = node(11)
@@ -107,19 +115,19 @@ def PoseDetection():
     extremities = [leftHand, rightHand, leftFoot, rightFoot]
     
     sounds = {
-        'Ride': "./assets/Used_Audio/ride-acoustic02.wav",
-        'Tom1': "./assets/Used_Audio/tom-acoustic01.wav",
-        'Tom2': "./assets/Used_Audio/tom-acoustic02.wav",
-        'Hat': "./assets/Used_Audio/hihat-acoustic01.wav",
-        'HatOpen': "./assets/Used_Audio/hihat-dist02.wav",
-        'Crash': "./assets/Used_Audio/crash-acoustic.wav",
-        'FTom': "./assets/Used_Audio/tom-rototom.wav",
-        'SD': "./assets/Used_Audio/snare-acoustic01.wav",
-        'BD': "./assets/Used_Audio/kick-classic.wav",
-        'Special1': './assets/Used_Audio/clap-808.wav',
-        'Special2': './assets/Used_Audio/cowbell-808.wav',
-        'Off': './assets/Used_Audio/Cowbell.wav',
-        'On': './assets/Used_Audio/Cowbell.wav'
+        'Ride': "./Motion-Project/assets/Used_Audio/ride-acoustic02.wav",
+        'Tom1': "./Motion-Project/assets/Used_Audio/tom-acoustic01.wav",
+        'Tom2': "./Motion-Project/assets/Used_Audio/tom-acoustic02.wav",
+        'Hat': "./Motion-Project/assets/Used_Audio/hihat-acoustic01.wav",
+        'HatOpen': "./Motion-Project/assets/Used_Audio/hihat-dist02.wav",
+        'Crash': "./Motion-Project/assets/Used_Audio/crash-acoustic.wav",
+        'FTom': "./Motion-Project/assets/Used_Audio/tom-rototom.wav",
+        'SD': "./Motion-Project/assets/Used_Audio/snare-acoustic01.wav",
+        'BD': "./Motion-Project/assets/Used_Audio/kick-classic.wav",
+        'Special1': './Motion-Project/assets/Used_Audio/clap-808.wav',
+        'Special2': './Motion-Project/assets/Used_Audio/cowbell-808.wav',
+        'Off': './Motion-Project/assets/Used_Audio/Cowbell.wav',
+        'On': './Motion-Project/assets/Used_Audio/Cowbell.wav'
     }
 
     # Audio mapping grid
@@ -154,42 +162,43 @@ def PoseDetection():
         if not success:
             break
 
-        # Read image and set parameters
-        frame = cv2.resize(frame, (capWidth, capHeight))
+        # Process image and set parameters
+        frame = cv2.resize(frame, (windowWidth, windowHeight))
         imgRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        height = frame.shape[0]
-        width = frame.shape[1]
 
-        # Process image for body landmarks
+        # Get body landmarks from image
         results = vid_pose.process(imgRGB)
-        landmarks = results.pose_landmarks
-        if landmarks == None:
+        rawData = results.pose_landmarks # Returned as a class of landmarks
+
+        if rawData == None:
             continue
+
+        print(frame.height, frame.width)
 
         # Store hand / foot landmarks
         for mark in range(33):
 
-            data_point = landmarks.landmark[mark]
-            dic[mark] = {
-                'x': data_point.x,
-                'y': data_point.y,
+            markCoord = rawData.landmark[mark]
+            dataDict[mark] = {
+                'x': markCoord.x,
+                'y': markCoord.y,
                 # 'z': data_point.z,
-                'vis': data_point.visibility}
+                'vis': markCoord.visibility}
 
         # Draw landmarks
         mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS, 
                                 landmark_drawing_spec = mp_drawing.DrawingSpec(color = (255,255,255), thickness = 2, circle_radius = 2), 
-                                connection_drawing_spec = mp_drawing.DrawingSpec(color = (0,255,0 ), thickness = 2, circle_radius = 1))
+                                connection_drawing_spec = mp_drawing.DrawingSpec(color = (0,255,0), thickness = 2, circle_radius = 1))
 
         # Flip annotated image horizontally, output mirrors player
         frame = cv2.flip(frame, 1)
     
 
-        # Check if full user torso (4 nodes) is in frame
+        # Update torso, check if all 4 nodes are in frame
         inFrame = True
         for point in torso:
 
-            point.updateNode(dic)
+            point.updateNode(dataDict)
 
             if point.vis < 0.5:
                 inFrame = False
@@ -204,8 +213,8 @@ def PoseDetection():
             for object in extremities:
 
                 # Update extremity vector parameters
-                object.tail.updateNode(dic)
-                object.head.updateNode(dic)
+                object.tail.updateNode(dataDict)
+                object.head.updateNode(dataDict)
 
                 # Check for drum hit
                 isHit = hitCheck(object)
@@ -254,17 +263,17 @@ def PoseDetection():
             UIState = 'Out'
 
             # Draw "Invisible Drum_Kit" Title
-            frame = cv2.putText(frame, "Invisible Drum Kit", (int(0.35 * width), int(0.1 * height)), cv2.FONT_HERSHEY_SIMPLEX, 
+            frame = cv2.putText(frame, "Invisible Drum Kit", (int(0.35 * windowWidth), int(0.1 * windowHeight)), cv2.FONT_HERSHEY_SIMPLEX, 
                                 fontScale = 4, color = (0,0,0), thickness = 6, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
-            frame = cv2.putText(frame, "Inspired by Rowan Atkinson", (int(0.4 * width), int(0.15 * height)), cv2.FONT_HERSHEY_SIMPLEX, 
+            frame = cv2.putText(frame, "Inspired by Rowan Atkinson", (int(0.4 * windowWidth), int(0.15 * windowHeight)), cv2.FONT_HERSHEY_SIMPLEX, 
                                 fontScale = 2, color = (0,0,0), thickness = 6, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
 
             # Draw "Full Body Not in Frame" Message
-            tL = (int(0.2 * width), int(0.85 * height))
-            bR = (int(0.8 * width), int(0.95 * height))
+            tL = (int(0.2 * windowWidth), int(0.85 * windowHeight))
+            bR = (int(0.8 * windowWidth), int(0.95 * windowHeight))
             frame = cv2.rectangle(frame, tL, bR, color = (0,0,200), thickness = -1)
             
-            frame = cv2.putText(frame, "Full Body Not In Frame", (int(0.212 * width), int(0.925 * height)), cv2.FONT_HERSHEY_SIMPLEX, 
+            frame = cv2.putText(frame, "Full Body Not In Frame", (int(0.212 * windowWidth), int(0.925 * windowHeight)), cv2.FONT_HERSHEY_SIMPLEX, 
                                 fontScale = 3, color = (255,255,255), thickness = 6, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
 
 
@@ -293,20 +302,20 @@ def PoseDetection():
 
         
         # Draw On/Off Button
-        tL = (int(powButton.x1 * width), int(powButton.y1 * height))
-        bR = (int(powButton.x2 * width), int(powButton.y2 * height))
+        tL = (int(powButton.x1 * windowWidth), int(powButton.y1 * windowHeight))
+        bR = (int(powButton.x2 * windowWidth), int(powButton.y2 * windowHeight))
         frame = cv2.rectangle(frame, tL, bR, color = btnBG, thickness = -1)
 
-        frame = cv2.putText(frame, stateText, (int(powX * width), int(powY * height)), cv2.FONT_HERSHEY_SIMPLEX, 
+        frame = cv2.putText(frame, stateText, (int(powX * windowWidth), int(powY * windowHeight)), cv2.FONT_HERSHEY_SIMPLEX, 
                                 fontScale = 2, color = btnTxtColor, thickness = 2, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
 
-        frame = cv2.putText(frame, altText, (int(altX * width), int(altY * height)), cv2.FONT_HERSHEY_SIMPLEX, 
+        frame = cv2.putText(frame, altText, (int(altX * windowWidth), int(altY * windowHeight)), cv2.FONT_HERSHEY_SIMPLEX, 
                                 fontScale = 1, color = btnTxtColor, thickness = 2, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
 
         # Draw border
-        top = int(0.05 * height)
+        top = int(0.05 * windowHeight)
         bottom = top
-        left = int(0.05 * width)
+        left = int(0.05 * windowWidth)
         right = left
         frame = cv2.copyMakeBorder(frame, top, bottom, left, right, cv2.BORDER_CONSTANT, None, borderColor)
 
@@ -322,7 +331,7 @@ def PoseDetection():
         if cv2.getWindowProperty('Motion Cap', cv2.WND_PROP_VISIBLE) < 1:
             break
 
-    # FIXME
+    # Return extremities array for testing full-run data
     return extremities
 
 
@@ -334,6 +343,13 @@ def avg(x, y):
 
 
 def updateGrid(torso):
+    """This is cool.
+
+    69 nice
+    
+    """
+
+
 # Calculate hit grid from torso points
 # hitGrid: [['Special1', 'Special2'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
 
@@ -413,14 +429,16 @@ def hitCheck(extremity):
     rightHit = (-1 * maxAngle) < a < (-1 * minAngle) and w1 > wLim and w2 < (0.5 * w1) # Sharp maximum in angular velocity
     altHit = alt and v1 < vLim and v2 > 0.3 * v1 # Sharp minimum in vertical velocity
 
-    if leftHit or rightHit or altHit:
-        return True
-    else:
-        return False
+    return leftHit or rightHit or altHit
 
 
 def map(extremity, rowRanges, colRanges, powerB, soundCodes):
+    """Determine map location of limb for sound output
     
+    Keyword arguments:
+    extremity -- 
+    """
+
     x = extremity.head.x
     y = extremity.head.y
 
@@ -462,23 +480,23 @@ cap = cv2.VideoCapture(0)
 capWidth = int(cap.get(3)) #640
 capHeight = int(cap.get(4)) #480
 
-# Get active window size
+# Get active screen size (1920 x 1080)
 root = tk.Tk()
-windowWidth, windowHeight = int(root.winfo_screenwidth()), int(root.winfo_screenheight())
+screenWidth, screenHeight = int(root.winfo_screenwidth()), int(root.winfo_screenheight())
 
-# Scale camera output value
-scale = max((windowWidth / capWidth), (windowHeight / capHeight))
-capWidth = int(capWidth * scale)
-capHeight = int(capHeight * scale)
+# Scale camera output size so both parameters fill screen
+scale = max((screenWidth / capWidth), (screenHeight / capHeight))
+windowWidth = int(capWidth * scale) #1920
+windowHeight = int(capHeight * scale) #1440
 
-# Define desktop window
+# Define fullscreen desktop window (cv2 autoshrinks so frame ratio kept)
 cv2.namedWindow("Motion Cap", cv2.WINDOW_GUI_NORMAL)
-cv2.resizeWindow("Motion Cap", capWidth, capHeight)
+cv2.resizeWindow("Motion Cap", windowWidth, windowHeight)
 
-# FIXME
-extremities = PoseDetection()
+# Main function loop
+extremities = main()
 
-# FIXME Extremity behavior testing
+# Uncomment to graph extremity behavior
 # for item in extremities:
 #     plt.subplot(2,2,1)
 #     plt.plot([x for x in range(len(item.angle))], item.angle, label = "angle")

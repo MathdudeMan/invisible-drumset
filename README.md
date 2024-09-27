@@ -1,6 +1,6 @@
 # Invisible Drum Set App
 
-Inspired by Rowan Atkinson's classic air drumming act, this Python app enables a user to play on their own invisible drum kit.
+Inspired by Rowan Atkinson's classic air drumming act, this Python app script enables a user to play on their own invisible drum kit.
 
 The app primarily uses Mediapipe Pose, a Pose Estimation library developed by Google, and OpenCV, a library for live video and image processing for Computer Vision (CV) applications. A "hit check" function within the program responds whenever a hand or foot "hits" an invisible object with a like drum sound, dependent on hit location.
 
