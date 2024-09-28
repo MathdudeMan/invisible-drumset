@@ -125,19 +125,19 @@ class drumGrid:
                   ['BD', 'Hat']]
 
     drumSounds = {
-    'Ride': "./Motion-Project/assets/Used_Audio/ride-acoustic02.wav",
-    'Tom1': "./Motion-Project/assets/Used_Audio/tom-acoustic01.wav",
-    'Tom2': "./Motion-Project/assets/Used_Audio/tom-acoustic02.wav",
-    'Hat': "./Motion-Project/assets/Used_Audio/hihat-acoustic01.wav",
-    'HatOpen': "./Motion-Project/assets/Used_Audio/hihat-dist02.wav",
-    'Crash': "./Motion-Project/assets/Used_Audio/crash-acoustic.wav",
-    'FTom': "./Motion-Project/assets/Used_Audio/tom-rototom.wav",
-    'SD': "./Motion-Project/assets/Used_Audio/snare-acoustic01.wav",
-    'BD': "./Motion-Project/assets/Used_Audio/kick-classic.wav",
-    'Special1': './Motion-Project/assets/Used_Audio/clap-808.wav',
-    'Special2': './Motion-Project/assets/Used_Audio/cowbell-808.wav',
-    'Off': './Motion-Project/assets/Used_Audio/Cowbell.wav',
-    'On': './Motion-Project/assets/Used_Audio/Cowbell.wav'
+    'Ride': "./invisible-drumset/assets/Used_Audio/ride-acoustic02.wav",
+    'Tom1': "./invisible-drumset/assets/Used_Audio/tom-acoustic01.wav",
+    'Tom2': "./invisible-drumset/assets/Used_Audio/tom-acoustic02.wav",
+    'Hat': "./invisible-drumset/assets/Used_Audio/hihat-acoustic01.wav",
+    'HatOpen': "./invisible-drumset/assets/Used_Audio/hihat-dist02.wav",
+    'Crash': "./invisible-drumset/assets/Used_Audio/crash-acoustic.wav",
+    'FTom': "./invisible-drumset/assets/Used_Audio/tom-rototom.wav",
+    'SD': "./invisible-drumset/assets/Used_Audio/snare-acoustic01.wav",
+    'BD': "./invisible-drumset/assets/Used_Audio/kick-classic.wav",
+    'Special1': './invisible-drumset/assets/Used_Audio/clap-808.wav',
+    'Special2': './invisible-drumset/assets/Used_Audio/cowbell-808.wav',
+    'Off': './invisible-drumset/assets/Used_Audio/Cowbell.wav',
+    'On': './invisible-drumset/assets/Used_Audio/Cowbell.wav'
     }
 
     def __init__(self, body):
