@@ -23,14 +23,6 @@ class node:
         self.vis = dic[self.loc]['vis']
 
 
-class torso:
-    def __init__(self, lShoulder, rShoulder, lHip, rHip):
-        self.lShoulder = lShoulder
-        self.rShoulder = rShoulder
-        self.lHip = lHip
-        self.rHip = rHip
-
-
 class extremity:
     def __init__(self, tail = int, head = int, type = '', side = ''):
         
@@ -45,6 +37,10 @@ class extremity:
         self.angVel = [] # Angular velocity values
         self.vert = [] # Delta Y values
         self.dVert = [] # Change in delta Y (rel. velocity of head)
+
+    def update(self, dataDict):
+        self.tail.updateNode(dataDict)
+        self.head.updateNode(dataDict)
 
     def addAngle(self):
         
@@ -173,8 +169,6 @@ def main():
         if rawData == None:
             continue
 
-        print(frame.height, frame.width)
-
         # Store hand / foot landmarks
         for mark in range(33):
 
@@ -210,20 +204,19 @@ def main():
             gridRows, gridColumns = updateGrid(torso)
 
             # Sound Check / Output for each extremity
-            for object in extremities:
+            for ext in extremities:
 
                 # Update extremity vector parameters
-                object.tail.updateNode(dataDict)
-                object.head.updateNode(dataDict)
+                ext.update(dataDict)
 
                 # Check for drum hit
-                isHit = hitCheck(object)
+                isHit = hitCheck(ext)
 
                 # Play sound when hit occurs
                 if isHit == True:
 
                     # Get drum mapping
-                    mapVal = map(object, gridRows, gridColumns, powButton, soundCodes)
+                    mapVal = map(ext, gridRows, gridColumns, powButton, soundCodes)
                   
                     # Check for false positive from out-of-frame extremity
                     if mapVal == False:
@@ -297,9 +290,7 @@ def main():
                 altText = "(Enter Frame to Use)"
                 btnBG = (60,60,60)
                 btnTxtColor = (150, 150, 150)  
-        
-
-
+    
         
         # Draw On/Off Button
         tL = (int(powButton.x1 * windowWidth), int(powButton.y1 * windowHeight))
@@ -318,7 +309,6 @@ def main():
         left = int(0.05 * windowWidth)
         right = left
         frame = cv2.copyMakeBorder(frame, top, bottom, left, right, cv2.BORDER_CONSTANT, None, borderColor)
-
 
         # Display frame
         cv2.imshow('Motion Cap', frame)
@@ -394,6 +384,8 @@ def hitCheck(extremity):
     midMax = 100
 
     anglSwap = 300 # Min angle change to detect sign change (e.g. + to -)
+
+
 
     # Prevent false positives from out-of-frame extremities
     if extremity.tail.vis < visMin and extremity.head.vis < visMin:
@@ -497,15 +489,15 @@ cv2.resizeWindow("Motion Cap", windowWidth, windowHeight)
 extremities = main()
 
 # Uncomment to graph extremity behavior
-# for item in extremities:
-#     plt.subplot(2,2,1)
-#     plt.plot([x for x in range(len(item.angle))], item.angle, label = "angle")
-#     plt.subplot(2,2,2)
-#     plt.plot([x for x in range(len(item.angVel))], item.angVel, label = "theta")
-#     plt.subplot(2,2,3)
-#     plt.plot([x for x in range(len(item.vert))], item.vert, label = "vert")
-#     plt.subplot(2,2,4)
-#     plt.plot([x for x in range(len(item.dVert))], item.dVert, label = "dVert")
+for item in extremities:
+    plt.subplot(2,2,1)
+    plt.plot([x for x in range(len(item.angle))], item.angle, label = "angle")
+    plt.subplot(2,2,2)
+    plt.plot([x for x in range(len(item.angVel))], item.angVel, label = "theta")
+    plt.subplot(2,2,3)
+    plt.plot([x for x in range(len(item.vert))], item.vert, label = "vert")
+    plt.subplot(2,2,4)
+    plt.plot([x for x in range(len(item.dVert))], item.dVert, label = "dVert")
 
 plt.show()
 

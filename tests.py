@@ -1,21 +1,17 @@
 import unittest
 from modules.overlay import border
-from assets.readme_images import Grid_Diagram
+
+from modules.body import body
+from modules.drumset import drumGrid
 
 class test_motion(unittest.TestCase):
-
-    # Define placeholder node / extremity w. 
-    # Define placeholder's .x, .y, .vis
-    # Input into function
-    # Assert output is correct
     
     # @classmethod
     def setUp(self):
         pass
 
-    def borderDrawing(self):
-        newborder = border((0,0,0))
-        newborder.draw()
+    def test_grid(self):
+        dg = drumGrid(body())
 
     # @classmethod
     def tearDown(self):

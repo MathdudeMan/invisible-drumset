@@ -13,7 +13,7 @@ vid_pose = mp_pose.Pose()
 class body:
     """Holds all landmark data and aggregates into extremity and torso data."""
 
-    def __init__(self):
+    def __init__(self, window):
 
         # Torso definitions
         leftShoulder = node(11)
@@ -30,26 +30,25 @@ class body:
         self.torso = [leftShoulder, rightShoulder, leftHip, rightHip]
         self.extremities = [leftHand, rightHand, leftFoot, rightFoot]
         self.landmarks = landmarks(33)
+
+        self.maxX = window.width
+        self.maxY = window.height
         self.inFrame = False
 
     def update(self, frame):
         """Updates body attributes, including locations and inFrame determination."""
 
         self.landmarks.updateData(frame)
-        self._updateTorso(self.landmarks.data)
-        self._updateExtremities(self.landmarks.data)
+        self._updateComponents(self.landmarks.data)
         self.inFrame = self._frameCheck()
     
-    def _updateTorso(self, landmarkData):
+    def _updateComponents(self, landmarkData):
         
         for node in self.torso:
-            node.updateNode(landmarkData)
+            node.update(landmarkData, self.maxX, self.maxY)
 
-    def _updateExtremities(self, landmarkData):
-
-        for object in self.extremities:
-            object.tail.updateNode(landmarkData)
-            object.head.updateNode(landmarkData)
+        for extremity in self.extremities:
+            extremity.update(landmarkData, self.maxX, self.maxY)
 
     def _frameCheck(self):
         """Returns boolean denoting if all 4 torso nodes are in frame."""
@@ -72,7 +71,7 @@ class landmarks:
         self.data = dict.fromkeys(range(self.length), pointStructure)
 
     def updateData(self, image):
-        """Update current data dictionary with user landmark locations."""
+        """Update current user landmarks dictionary from current image."""
 
         allLandmarks = vid_pose.process(image)
         self.rawData = allLandmarks.pose_landmarks
@@ -94,7 +93,7 @@ class landmarks:
         """Uses mediapipe library to draw landmarks on current frame. 
         Uses input of only a given frame image, not requiring frame size parameters.
         
-        _(Called in overlay.py.)_"""
+        *(Called in overlay.py.)*"""
 
         mp_drawing.draw_landmarks(frame, self.rawData, mp_pose.POSE_CONNECTIONS, 
                                 landmark_drawing_spec = mp_drawing.DrawingSpec(color = (255,255,255), thickness = 2, circle_radius = 2), 
@@ -104,59 +103,77 @@ class landmarks:
 class node:
     """Saves landmark data of an important node."""
 
-    def __init__(self, loc = int):
-        self.loc = loc
+    def __init__(self, id = int):
+        self.id = id
         self.x = float
         self.y = float
         self.vis = float
 
-    def updateNode(self, landmarkData = {}):
-        self.x = landmarkData[self.loc]['x']
-        self.y = landmarkData[self.loc]['y']
-        self.vis = landmarkData[self.loc]['vis']
+    def update(self, landmarkData, windowWidth, windowHeight):
+        self.x = landmarkData[self.id]['x'] * windowWidth
+        self.y = landmarkData[self.id]['y'] * windowHeight
+        self.vis = landmarkData[self.id]['vis']
 
 
 class extremity:
+    """Saves information and data on given extremity, represented as a two-point vector with two nodes (head and tail)."""
+        
     def __init__(self, tail = int, head = int, type = '', side = ''):
-        """Saves information and data on given extremity, represented by two nodes (head and tail)"""
+        """
+        - Tail = MediaPipe tail node index (e.g. wrist)
+        - Head = MediaPipe head node index (e.g. finger)
+        - Type = 'Hand' or 'Foot'
+        - Side = 'Right' or 'Left'
+        """
 
-        self.type = type # Possible values 'Hand' and 'Foot'
-        self.side = side # 'Right' or 'Left'
-
-        # Tail and head of foot / hand vector, pointed outward from base of extremity
         self.tail = node(tail)
         self.head = node(head)
+        self.type = type
+        self.side = side
 
-        self.angle = [] # Vector angle values
-        self.angVel = [] # Angular velocity values
-        self.vert = [] # Delta Y values
-        self.dVert = [] # Change in delta Y (rel. velocity of head)
+        # Angles & angular velocities
+        self.angle = [] 
+        self.angVel = []
 
-    def addAngle(self, window):
-        
-        # FIXME window
-        # Distances relative to screen (i.e. 0.0 - 1.0) converted to absolute distances
-        xDisp = window.capWidth * (self.head.x - self.tail.x)
-        yDisp = window.capHeight * (self.head.y - self.tail.y)
+        # Vertical component and change thereof
+        self.vert = []
+        self.dVert = []
 
-        # Angle value normalized to degree range -180 : 180, w. origin shifted to floor
+    def update(self, landmarkData, windowWidth, windowHeight):
+        self.tail.update(landmarkData, windowWidth, windowHeight)
+        self.head.update(landmarkData, windowWidth, windowHeight)
+        self.updateAngles()
+
+    def updateAngles(self):
+        """Update angle/vertical components and change rates."""
+
+        # Relative locations normalized to window size
+        xDisp = self.head.x - self.tail.x
+        yDisp = self.head.y - self.tail.y
+
+        # X and y swapped in tangent function so angle origin is downwards
         theta = degrees(atan2(xDisp, yDisp))
         self.angle.append(theta)
 
-        if len(self.angle) > 1:
+        self.vert.append(-1 * yDisp)
+
+        try:
             dTheta = self.angle[-1] - self.angle[-2]
             self.angVel.append(dTheta)
+        except IndexError:
+            pass
 
-        # Update change in delta-Y for vertical hit check
-        self.vert.append(-1 * yDisp)
-        if len(self.vert) > 1:
+        try:
             deltaY = self.vert[-1] - self.vert[-2]
             self.dVert.append(deltaY)
+        except IndexError:
+            pass
 
-        self.__cleanup()
-        
-    def __cleanup(self):
-        # Angle / delta-Y queue cleanup - comment out during data display 
+        self._cleanup()
+
+    def _cleanup(self):
+        """ Angle / verticals queue cleanup."""
+
         if len(self.angVel) > 3:
             self.angle.pop(0)
             self.angVel.pop(0)
