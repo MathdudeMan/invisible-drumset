@@ -1,3 +1,5 @@
+"""Contains tools for drawing a frontend overlay on a given video frame."""
+
 import cv2
 
 
@@ -16,7 +18,7 @@ class drawClient:
         })
 
     def drawOverlay(self, frame, body, state, mirror):
-        """Draw overlay aligned with current program state."""
+        """Draw overlay given current program state."""
 
         frameEdit = self.overlays[state].draw(frame, body, mirror)
         return frameEdit
@@ -38,6 +40,10 @@ class overlay:
             self.titleText = None
 
     def draw(self, frame, body, mirror):
+        """
+        Draw landmarks, button, title text, and border onto a frame. Flips frame if image Mirror active.
+        Returns edited frame.
+        """
 
         body.landmarks.draw(frame)
 
@@ -54,6 +60,7 @@ class overlay:
 
 
 class border:
+    """Creates solid-color border around given frame."""
     
     borderThickness = 0.05
     
@@ -84,6 +91,7 @@ class button:
     
 
 class powButton(button):
+    """Creates button denoting current state, which may be hit by user to change."""
     
     powX = 0.045
     powY = 0.125
@@ -111,6 +119,7 @@ class powButton(button):
 
 
 class titleText:
+    """Creates title and startup text on given frame."""
 
     titleX1 = 0.35
     titleY1 = 0.1
@@ -127,13 +136,13 @@ class titleText:
     def draw(self, frame, frameWidth, frameHeight):
         """Draws title and startup message content onto frame image."""
 
-        # Draw "Invisible Drum_Kit" Title
+        # "Invisible Drum_Kit" Title
         frame = cv2.putText(frame, "Invisible Drum Kit", (int(self.titleX1 * frameWidth), int(self.titleY1 * frameHeight)), cv2.FONT_HERSHEY_SIMPLEX, 
                             fontScale = 4, color = (0,0,0), thickness = 6, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
         frame = cv2.putText(frame, "Inspired by Rowan Atkinson", (int(self.subtitleX1 * frameWidth), int(self.subtitleY1 * frameHeight)), cv2.FONT_HERSHEY_SIMPLEX, 
                             fontScale = 2, color = (0,0,0), thickness = 6, lineType = cv2.LINE_AA, bottomLeftOrigin = False)
 
-        # Draw "Full Body Not in Frame" Message
+        # "Full Body Not in Frame" Message
         tL = (int(self.outBoxX1 * frameWidth), int(self.outBoxY1 * frameHeight))
         bR = (int(self.outBoxX2 * frameWidth), int(self.outBoxY2 * frameHeight))
         frame = cv2.rectangle(frame, tL, bR, color = (0,0,200), thickness = -1)

@@ -1,13 +1,13 @@
-"""
-Includes tools for constructing the program's user interface.
-"""
+"""Includes tools for producing and storing video frames, including camera and program window objects."""
 
 import tkinter as tk
 import cv2
 
 
 class frameManager:
-    """Performs operations involving camera frame retrieval and display"""
+    """Performs operations involving video frame retrieval and display.
+    
+    User webcam (port 0) set as camera by default."""
 
     def __init__(self):
 
@@ -18,6 +18,8 @@ class frameManager:
         self.framePack = framePackage()
 
     def getFramePackage(self):
+        """Retrieves current video frame and returns frame package."""
+
         newFrame = self.cam.read()
         self.framePack.packImage(newFrame, self.window.width, self.window.height)
         return self.framePack
@@ -31,7 +33,7 @@ class frameManager:
         if cv2.waitKey(2) == -2:
             pass
 
-        # If window closed, end program activity
+        # If window closed, end program activity. Responsible for ending program.
         if cv2.getWindowProperty(self.window.title, cv2.WND_PROP_VISIBLE) < 1:
             self.cam.close
             return False
@@ -40,7 +42,7 @@ class frameManager:
     
 
 class framePackage:
-    """Stores two copies of image, one for pose estimation and the other for user output."""
+    """Stores two copies of image, one formatted for pose estimation and the other for window display."""
 
     def __init__(self):
 
@@ -48,12 +50,14 @@ class framePackage:
         self.imgReadable = None
 
     def packImage(self, rawImage, windowWidth, windowHeight):
+        """Resizes given frame to window size and creates duplicate formatted to RGB for mediapipe analysis."""
 
         self.imgOutput = cv2.resize(rawImage, (windowWidth, windowHeight))
         self.imgReadable = cv2.cvtColor(self.imgOutput, cv2.COLOR_BGR2RGB)
 
+
 class window:
-    """Creates window object to hold camera output."""
+    """Window object for holding user-facing content."""
 
     def __init__(self, title):
 
@@ -76,12 +80,16 @@ class window:
 
         
 class camera:
+    """Holds data for camera used."""
+
     def __init__(self, port):
+
         self.cap = cv2.VideoCapture(port)
-        self.width = int(self.cap.get(3)) #640
-        self.height = int(self.cap.get(4)) #480
+        self.width = int(self.cap.get(3))
+        self.height = int(self.cap.get(4))
 
     def read(self):
+
         isValid, img = self.cap.read() 
         if isValid:
             return img
@@ -89,5 +97,6 @@ class camera:
             return False
 
     def close(self):
+
         self.cap.release()
         cv2.destroyAllWindows

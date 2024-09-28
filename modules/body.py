@@ -1,6 +1,4 @@
-"""
-Contains tools for defining the user's body features and locations via pose estimation.
-"""
+"""Contains tools for defining the user's body features and locations via Mediapipe pose estimation library."""
 
 import mediapipe as mp
 from math import degrees, atan2
@@ -36,7 +34,7 @@ class body:
         self.inFrame = False
 
     def update(self, frame):
-        """Updates body attributes, including locations and inFrame determination."""
+        """Updates body attributes for given frame, including locations and inFrame status."""
 
         self.landmarks.updateData(frame)
         self._updateComponents(self.landmarks.data)
@@ -71,7 +69,7 @@ class landmarks:
         self.data = dict.fromkeys(range(self.length), pointStructure)
 
     def updateData(self, image):
-        """Update current user landmarks dictionary from current image."""
+        """Updates current landmarks dictionary given current image."""
 
         allLandmarks = vid_pose.process(image)
         self.rawData = allLandmarks.pose_landmarks
@@ -79,6 +77,7 @@ class landmarks:
             self._extract(self.rawData)
 
     def _extract(self, rawData):
+
         for mark in range(self.length):
 
             coordinate = rawData.landmark[mark]
@@ -93,7 +92,7 @@ class landmarks:
         """Uses mediapipe library to draw landmarks on current frame. 
         Uses input of only a given frame image, not requiring frame size parameters.
         
-        *(Called in overlay.py.)*"""
+        *(Called by draw client in overlay.py.)*"""
 
         mp_drawing.draw_landmarks(frame, self.rawData, mp_pose.POSE_CONNECTIONS, 
                                 landmark_drawing_spec = mp_drawing.DrawingSpec(color = (255,255,255), thickness = 2, circle_radius = 2), 
@@ -101,15 +100,18 @@ class landmarks:
 
 
 class node:
-    """Saves landmark data of an important node."""
+    """Saves landmark data for an given mediapipe node."""
 
     def __init__(self, id = int):
+
         self.id = id
         self.x = float
         self.y = float
         self.vis = float
 
     def update(self, landmarkData, windowWidth, windowHeight):
+        """Stores absolute window coordinate value (x,y) in pixels."""
+
         self.x = landmarkData[self.id]['x'] * windowWidth
         self.y = landmarkData[self.id]['y'] * windowHeight
         self.vis = landmarkData[self.id]['vis']
@@ -140,6 +142,7 @@ class extremity:
         self.dVert = []
 
     def update(self, landmarkData, windowWidth, windowHeight):
+
         self.tail.update(landmarkData, windowWidth, windowHeight)
         self.head.update(landmarkData, windowWidth, windowHeight)
         self.updateAngles()
@@ -172,7 +175,7 @@ class extremity:
         self._cleanup()
 
     def _cleanup(self):
-        """ Angle / verticals queue cleanup."""
+        """ Clears past data for angles and verticals."""
 
         if len(self.angVel) > 3:
             self.angle.pop(0)

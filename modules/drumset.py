@@ -1,17 +1,17 @@
-"""
-    Contains tools for defining and operating the invisible drum kit.
-"""
+"""Contains tools for defining and operating the invisible drum kit."""
 
 from .overlay import button
 
 from playsound import playsound
-import pygame.mixer as pg
+
+# Alternative sound output libraries
+# import pygame.mixer as pg
 # import sounddevice as sd
 # import soundfile as sf
 
 
 class drumsetClient:
-    """Performs functions for playing an invisible on-screen drum kit."""
+    """Contains functions for playing the invisible on-screen drum kit."""
 
     stateConversion = {True: 'On', False: 'Off'}
 
@@ -37,26 +37,24 @@ class drumsetClient:
             if mapVal == None:
                 continue
             elif mapVal == 'Button':
-                self.triggerButton()
+                self._triggerButton()
             elif self.activeSound:
-                self.triggerAudio(mapVal)
+                self._triggerAudio(mapVal)
 
         return self.stateConversion[self.activeSound]
 
-    def triggerButton(self):
+    def _triggerButton(self):
 
         self.activeSound = not self.activeSound
-        self.triggerAudio(self.stateConversion[self.activeSound])
+        self._triggerAudio(self.stateConversion[self.activeSound])
 
-    def triggerAudio(self, mapVal):
+    def _triggerAudio(self, mapVal):
     
         playsound(self.grid.drumSounds[mapVal], block = False)
 
 
 class hitClient:
-    """
-    Collection of functions for calculating drum hit occurrences and outputting sounds.
-    """
+    """Collection of functions for calculating drum hit occurrences and outputting sounds."""
 
     # Minimum visibility value for hitCheck
     visMin = 0.5
@@ -77,6 +75,8 @@ class hitClient:
 
 
     def hitCheck(self, extremity):
+        """Checks extremity for hit based on change in changes in angle or vertical components.
+        Seeks for sharp spike in change (velocity) values."""
 
         # Bypass out-of-frame extremity
         if extremity.tail.vis < self.visMin and extremity.head.vis < self.visMin:
@@ -112,9 +112,7 @@ class hitClient:
 
 
 class drumGrid:
-    """
-    Contains basic parameters for drum kit grid boxes. Gridlines are defined in the x and y directions.
-    """
+    """Contains basic parameters for drum kit grid boxes. Gridlines are defined in the x and y directions."""
 
     hatOpenAngle = 70 # Minimum left foot angle to activate an open hat sound
 
@@ -156,9 +154,7 @@ class drumGrid:
         self.powButton.y2 *= self.endY
 
     def update(self):
-        """
-        Uses body torso to update gridline locations.
-        """
+        """Uses body torso to update gridline locations."""
 
         # Extract torso points
         leftShoulder = self.body.torso[0]
@@ -186,12 +182,10 @@ class drumGrid:
                     [0, torsoSplitX, self.endX]]
 
     def getMapVal(self, extremity, imgMirror):
-        """Determine map location of limb for sound output."""
+        """Determine grid map location of limb."""
 
         x = extremity.head.x
         y = extremity.head.y
-        rowMap = 0
-        colMap = 0
 
         if not (0 < x < self.endX and 0 < y < self.endY):
             return None
@@ -212,18 +206,7 @@ class drumGrid:
         if buttonCheckX and self.powButton.y1 < y < self.powButton.y2:
             return 'Button'
 
-        # Map Row and Column of extremity head
-        for i in range(len(self.rowGridlines) - 1):
-            if self.rowGridlines[i] <= y <= self.rowGridlines[i + 1]:
-                rowMap = i
-                break
-
-        for j in range(len(self.colGridlines[rowMap]) - 1):
-            if self.colGridlines[rowMap][j] <= x <= self.colGridlines[rowMap][j + 1]:
-                colMap = j
-                break
-            
-        mapVal = self.gridLayout[rowMap][colMap]
+        mapVal = self._gridMapper(x,y)
 
         # Open Hi Hat when left foot angled upwards
         if mapVal == 'Hat' and self.body.extremities[2].head.vis > 0.5 and abs(self.body.extremities[2].angle[-1]) > self.hatOpenAngle:
@@ -231,9 +214,27 @@ class drumGrid:
 
         return mapVal
         
+    def _gridMapper(self, xLoc, yLoc):
+        """Map Row and Column of extremity head"""
+
+        rowMap = 0
+        colMap = 0
+
+        for i in range(len(self.rowGridlines) - 1):
+            if self.rowGridlines[i] <= xLoc <= self.rowGridlines[i + 1]:
+                rowMap = i
+                break
+
+        for j in range(len(self.colGridlines[rowMap]) - 1):
+            if self.colGridlines[rowMap][j] <= yLoc <= self.colGridlines[rowMap][j + 1]:
+                colMap = j
+                break
+            
+        return self.gridLayout[rowMap][colMap]
+
 
 def avg(x, y):
-# Calculate average of two points
+    """Calculate average of two points"""
 
     average = (x + y) / 2
     return average
