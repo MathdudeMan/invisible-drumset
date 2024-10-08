@@ -63,8 +63,8 @@ class hitClient:
     wLim = 20
     vLim = -10
 
-    # Spike ratios
-    wRatio = 0.5
+    # Value drop ratios
+    wRatio = 0.4
     vRatio = 0.3
 
     minAngle = 20 # Hand angle hit threshold
@@ -116,7 +116,7 @@ class drumGrid:
 
     hatOpenAngle = 70 # Minimum left foot angle to activate an open hat sound
 
-    # Grid layout mapped top to bottom, right to left (from mediapipe perspective)
+    # Grid layout mapped top to bottom, right hand side to left hand side
     gridLayout = [['Special2', 'Special1'], 
                   ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], 
                   ['FTom', 'SD', 'Hat', 'Crash'], 
@@ -141,8 +141,8 @@ class drumGrid:
     def __init__(self, body):
         
         self.body = body
-        self.rowGridlines = [] * (len(self.gridLayout) + 1)
-        self.colGridlines = [] * (len(self.gridLayout))
+        self.horGridlines = [] * (len(self.gridLayout) + 1)
+        self.vertGridlines = [] * (len(self.gridLayout))
 
         self.endX = body.maxX
         self.endY = body.maxY
@@ -172,17 +172,17 @@ class drumGrid:
         waistLength = leftHip.x - rightHip.x
         torsoSplitX = avg(leftHip.x, rightHip.x)
 
-        # Calculate row gridlines, from Top to Bottom
-        self.rowGridlines = [0, shoulderY - torsoDiv, waistY - torsoDiv, waistY + torsoDiv, self.endY]
+        # Calculate horizontal gridlines, from Top to Bottom
+        self.horGridlines = [0, shoulderY - torsoDiv, waistY - torsoDiv, waistY + torsoDiv, self.endY]
         
-        # Calculate sub-column gridlines by Row, Top to Bottom and Right to Left (due to image flip)
-        self.colGridlines = [[0, torsoSplitX, self.endX], 
-                    [0, rightShoulder.x - waistLength, rightShoulder.x, torsoSplitX, leftShoulder.x + waistLength, self.endX], 
+        # Calculate vertical gridlines within each row, Top to Bottom and Right to Left (based on gridLayout)
+        self.vertGridlines = [[0, torsoSplitX, self.endX], 
+                    [0, rightShoulder.x - waistLength, rightShoulder.x, leftHip.x, leftShoulder.x + waistLength, self.endX], 
                     [0, rightShoulder.x, leftShoulder.x, leftShoulder.x + waistLength, self.endX], 
                     [0, torsoSplitX, self.endX]]
 
     def getMapVal(self, extremity, imgMirror):
-        """Determine grid map location of limb."""
+        """Determines grid map location of limb. Returns the associated string identifier, adjusted by defined parameters."""
 
         x = extremity.head.x
         y = extremity.head.y
@@ -215,22 +215,27 @@ class drumGrid:
         return mapVal
         
     def _gridMapper(self, xLoc, yLoc):
-        """Map Row and Column of extremity head"""
+        """Maps row and column of extremity head and returns the associated string identifier."""
 
         rowMap = 0
         colMap = 0
 
-        for i in range(len(self.rowGridlines) - 1):
-            if self.rowGridlines[i] <= xLoc <= self.rowGridlines[i + 1]:
+        for i in range(len(self.horGridlines) - 1):
+            if self.horGridlines[i] <= yLoc <= self.horGridlines[i + 1]:
                 rowMap = i
                 break
 
-        for j in range(len(self.colGridlines[rowMap]) - 1):
-            if self.colGridlines[rowMap][j] <= yLoc <= self.colGridlines[rowMap][j + 1]:
+        for j in range(len(self.vertGridlines[rowMap]) - 1):
+            if self.vertGridlines[rowMap][j] <= xLoc <= self.vertGridlines[rowMap][j + 1]:
                 colMap = j
                 break
-            
+
+        print("x: " + str(xLoc) + ", y: " + str(yLoc))
+        print("Row: " + str(rowMap) + ", Col: " + str(colMap))
+        print(self.gridLayout[rowMap][colMap])
+
         return self.gridLayout[rowMap][colMap]
+    
 
 
 def avg(x, y):

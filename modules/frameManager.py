@@ -3,6 +3,7 @@
 import tkinter as tk
 import cv2
 
+tk.Tk().withdraw()
 
 class frameManager:
     """Performs operations involving video frame retrieval and display.

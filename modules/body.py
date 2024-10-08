@@ -52,7 +52,7 @@ class body:
         """Returns boolean denoting if all 4 torso nodes are in frame."""
         
         for point in self.torso:
-            if point.vis < 0.5:
+            if point.vis < 0.5 or not (0 < point.x < self.maxX and 0 < point.y < self.maxY):
                 return False
             
         return True

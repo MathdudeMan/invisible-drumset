@@ -1,4 +1,4 @@
-from modules.frameWindow import frameManager, window
+from modules.frameManager import frameManager
 from modules.body import body
 from modules.overlay import drawClient
 from modules.drumset import drumsetClient
