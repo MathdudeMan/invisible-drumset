@@ -18,14 +18,14 @@ class frameManager:
 
         self.framePack = framePackage()
 
-    def getFramePackage(self):
+    def getFramePackage(self) -> 'framePack':
         """Retrieves current video frame and returns frame package."""
 
         newFrame = self.cam.read()
         self.framePack.packImage(newFrame, self.window.width, self.window.height)
         return self.framePack
         
-    def display(self, frame):
+    def display(self, frame) -> bool:
         """Returns True if window remains open after frame, False if closed."""
     
         cv2.imshow(self.window.title, frame)
@@ -50,7 +50,7 @@ class framePackage:
         self.imgOutput = None
         self.imgReadable = None
 
-    def packImage(self, rawImage, windowWidth, windowHeight):
+    def packImage(self, rawImage, windowWidth: int, windowHeight: int):
         """Resizes given frame to window size and creates duplicate formatted to RGB for mediapipe analysis."""
 
         self.imgOutput = cv2.resize(rawImage, (windowWidth, windowHeight))
@@ -60,7 +60,7 @@ class framePackage:
 class window:
     """Window object for holding user-facing content."""
 
-    def __init__(self, title):
+    def __init__(self, title: str):
 
         self.title = title
         cv2.namedWindow(self.title, cv2.WINDOW_GUI_NORMAL)
@@ -83,13 +83,13 @@ class window:
 class camera:
     """Holds data for camera used."""
 
-    def __init__(self, port):
+    def __init__(self, port: int):
 
         self.cap = cv2.VideoCapture(port)
         self.width = int(self.cap.get(3))
         self.height = int(self.cap.get(4))
 
-    def read(self):
+    def read(self) -> type | bool:
 
         isValid, img = self.cap.read() 
         if isValid:

@@ -30,6 +30,7 @@ class app:
             if self.bod.inFrame:
                 self.state = self.kit.playDrum(self.imgMirror)
             else:
+                self.kit.activeSound = False
                 self.state = 'Out'
 
             self.framePack.imgOutput = self.dwg.drawOverlay(self.framePack.imgOutput, 
@@ -41,6 +42,7 @@ def main():
 
     newApp = app()
     newApp.main()
+
 
 if __name__ == "__main__":
     main()

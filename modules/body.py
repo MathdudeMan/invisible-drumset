@@ -48,7 +48,7 @@ class body:
         for extremity in self.extremities:
             extremity.update(landmarkData, self.maxX, self.maxY)
 
-    def _frameCheck(self):
+    def _frameCheck(self) -> bool:
         """Returns boolean denoting if all 4 torso nodes are in frame."""
         
         for point in self.torso:
@@ -61,7 +61,7 @@ class body:
 class landmarks:
     """Stores dictionary of body landmark locations for current frame."""
 
-    def __init__(self, length):
+    def __init__(self, length: int):
         
         pointStructure = dict.fromkeys(['x','y','z','vis'], None)
         self.length = length
@@ -76,7 +76,7 @@ class landmarks:
         if self.rawData is not None:
             self._extract(self.rawData)
 
-    def _extract(self, rawData):
+    def _extract(self, rawData: dict):
 
         for mark in range(self.length):
 
@@ -102,14 +102,14 @@ class landmarks:
 class node:
     """Saves landmark data for an given mediapipe node."""
 
-    def __init__(self, id = int):
+    def __init__(self, id: int):
 
         self.id = id
         self.x = float
         self.y = float
         self.vis = float
 
-    def update(self, landmarkData, windowWidth, windowHeight):
+    def update(self, landmarkData: dict, windowWidth: int, windowHeight: int):
         """Stores absolute window coordinate value (x,y) in pixels."""
 
         self.x = landmarkData[self.id]['x'] * windowWidth
@@ -120,7 +120,7 @@ class node:
 class extremity:
     """Saves information and data on given extremity, represented as a two-point vector with two nodes (head and tail)."""
         
-    def __init__(self, tail = int, head = int, type = '', side = ''):
+    def __init__(self, tail: int, head: int, type: str, side: str):
         """
         - Tail = MediaPipe tail node index (e.g. wrist)
         - Head = MediaPipe head node index (e.g. finger)
@@ -141,7 +141,7 @@ class extremity:
         self.vert = []
         self.dVert = []
 
-    def update(self, landmarkData, windowWidth, windowHeight):
+    def update(self, landmarkData: dict, windowWidth: int, windowHeight: int):
 
         self.tail.update(landmarkData, windowWidth, windowHeight)
         self.head.update(landmarkData, windowWidth, windowHeight)

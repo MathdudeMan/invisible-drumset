@@ -1,4 +1,6 @@
 import unittest
+from unittest import mock
+
 
 class test_motion(unittest.TestCase):
     
@@ -6,6 +8,9 @@ class test_motion(unittest.TestCase):
     def setUp(self):
         pass
 
+
+    def test_object(self):
+        pass
 
     # @classmethod
     def tearDown(self):

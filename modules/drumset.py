@@ -13,7 +13,7 @@ from playsound import playsound
 class drumsetClient:
     """Contains functions for playing the invisible on-screen drum kit."""
 
-    stateConversion = {True: 'On', False: 'Off'}
+    stateName = {True: 'On', False: 'Off'}
 
     def __init__(self, body):
 
@@ -22,7 +22,7 @@ class drumsetClient:
         self.hitClient = hitClient()
         self.activeSound = False
 
-    def playDrum(self, imgMirror):
+    def playDrum(self, imgMirror) -> bool:
         """Returns state indicator: 'On' if sound is active, 'Off' otherwise."""
         
         self.grid.update()
@@ -41,14 +41,14 @@ class drumsetClient:
             elif self.activeSound:
                 self._triggerAudio(mapVal)
 
-        return self.stateConversion[self.activeSound]
+        return self.stateName[self.activeSound]
 
     def _triggerButton(self):
 
         self.activeSound = not self.activeSound
-        self._triggerAudio(self.stateConversion[self.activeSound])
+        self._triggerAudio(self.stateName[self.activeSound])
 
-    def _triggerAudio(self, mapVal):
+    def _triggerAudio(self, mapVal: str):
     
         playsound(self.grid.drumSounds[mapVal], block = False)
 
@@ -74,7 +74,7 @@ class hitClient:
     anglSwap = 300 # Min angle change to detect sign change (e.g. + to -)
 
 
-    def hitCheck(self, extremity):
+    def hitCheck(self, extremity) -> bool:
         """Checks extremity for hit based on change in changes in angle or vertical components.
         Seeks for sharp spike in change (velocity) values."""
 
@@ -96,7 +96,7 @@ class hitClient:
         if abs(w2) > self.anglSwap:
             extremity.angVel.pop(-1)
             return False
-        
+
         # Criteria for enabling Vertical Velocity check
         if extremity.type == 'Hand':
             alt = (abs(a) < self.minAngle or abs(a) > self.maxAngle or self.midMin < abs(a) < self.midMax) 
@@ -181,7 +181,7 @@ class drumGrid:
                     [0, rightShoulder.x, leftShoulder.x, leftShoulder.x + waistLength, self.endX], 
                     [0, torsoSplitX, self.endX]]
 
-    def getMapVal(self, extremity, imgMirror):
+    def getMapVal(self, extremity, imgMirror) -> str:
         """Determines grid map location of limb. Returns the associated string identifier, adjusted by defined parameters."""
 
         x = extremity.head.x
@@ -214,7 +214,7 @@ class drumGrid:
 
         return mapVal
         
-    def _gridMapper(self, xLoc, yLoc):
+    def _gridMapper(self, xLoc: float, yLoc: float) -> str:
         """Maps row and column of extremity head and returns the associated string identifier."""
 
         rowMap = 0
@@ -238,7 +238,7 @@ class drumGrid:
     
 
 
-def avg(x, y):
+def avg(x: float | int, y: float | int) -> float:
     """Calculate average of two points"""
 
     average = (x + y) / 2

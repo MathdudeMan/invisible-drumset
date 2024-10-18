@@ -17,7 +17,7 @@ class drawClient:
                            (50, 90, 0), "Power: OFF", "(Enter Frame to Use)", (60, 60, 60), (150, 150, 150), bootTextOn = True)
         })
 
-    def drawOverlay(self, frame, body, state, mirror):
+    def drawOverlay(self, frame, body, state: str, mirror) -> 'image':
         """Draw overlay given current program state."""
 
         frameEdit = self.overlays[state].draw(frame, body, mirror)
@@ -27,7 +27,7 @@ class drawClient:
 class overlay:
     """Stores overlay content of a given state, including border, button, and title text."""
 
-    def __init__(self, windowWidth, windowHeight, borderColor, btnText, btnSubText, btnColor, btnTextColor, bootTextOn = bool):
+    def __init__(self, windowWidth: int, windowHeight: int, borderColor: tuple, btnText: str, btnSubText: str, btnColor: tuple, btnTextColor: str, bootTextOn: bool):
 
         self.width = windowWidth
         self.height = windowHeight
@@ -39,7 +39,7 @@ class overlay:
         else:
             self.titleText = None
 
-    def draw(self, frame, body, mirror):
+    def draw(self, frame, body, mirror) -> 'image':
         """
         Draw landmarks, button, title text, and border onto a frame. Flips frame if image Mirror active.
         Returns edited frame.
@@ -64,10 +64,10 @@ class border:
     
     borderThickness = 0.05
     
-    def __init__(self, color):
+    def __init__(self, color: tuple):
         self.color = color
 
-    def draw(self, frame, frameWidth, frameHeight):
+    def draw(self, frame, frameWidth: int, frameHeight: int) -> 'image':
         """Returns edited image with border around it."""
 
         top = int(self.borderThickness * frameHeight)
@@ -98,14 +98,14 @@ class powButton(button):
     subX = 0.045
     subY = 0.185
 
-    def __init__(self, stateText, subText, color, textColor):
+    def __init__(self, stateText: str, subText: str, color: tuple, textColor: tuple):
 
         self.color = color
         self.stateText = stateText
         self.subText = subText
         self.textColor = textColor
 
-    def draw(self, frame, frameWidth, frameHeight):
+    def draw(self, frame, frameWidth: int, frameHeight: int):
         """Draws button and text onto the frame image."""
 
         tL = (int(self.x1 * frameWidth), int(self.y1 * frameHeight))
@@ -133,7 +133,7 @@ class titleText:
     outTextX1 = 0.212
     outTextY1 = 0.925
 
-    def draw(self, frame, frameWidth, frameHeight):
+    def draw(self, frame, frameWidth: int, frameHeight: int):
         """Draws title and startup message content onto frame image."""
 
         # "Invisible Drum_Kit" Title
