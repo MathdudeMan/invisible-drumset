@@ -4,15 +4,14 @@ from unittest import mock
 
 class test_motion(unittest.TestCase):
     
-    # @classmethod
+    @classmethod
     def setUp(self):
         pass
 
-
     def test_object(self):
-        pass
+        self.assertEqual(1, 1)
 
-    # @classmethod
+    @classmethod
     def tearDown(self):
         pass
 
