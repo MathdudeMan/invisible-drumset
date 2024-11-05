@@ -46,7 +46,7 @@ class Overlay:
         Returns edited frame.
         """
 
-        if mirror == True:
+        if mirror:
             frame = cv2.flip(frame, 1)
 
         self.button.draw(frame, self.width, self.height)

@@ -61,9 +61,9 @@ class Body:
 class node:
     """Saves landmark data for a given body node."""
 
-    def __init__(self, processor_id: int):
+    def __init__(self, landmark_id: int):
 
-        self.processor_id = processor_id
+        self.landmark_id = landmark_id
         self.x: float
         self.y: float
         self.vis: float
@@ -71,9 +71,9 @@ class node:
     def update(self, landmarkData: dict, windowWidth: int, windowHeight: int):
         """Stores absolute window coordinate value (x,y) in pixels."""
 
-        self.x = landmarkData[self.processor_id]['x'] * windowWidth
-        self.y = landmarkData[self.processor_id]['y'] * windowHeight
-        self.vis = landmarkData[self.processor_id]['vis']
+        self.x = landmarkData[self.landmark_id]['x'] * windowWidth
+        self.y = landmarkData[self.landmark_id]['y'] * windowHeight
+        self.vis = landmarkData[self.landmark_id]['vis']
 
 
 class extremity:

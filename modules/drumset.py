@@ -2,6 +2,7 @@
 
 from .drawing import Button
 import os
+import logging
 from playsound import playsound
 
 # Alternative sound playback libraries
@@ -112,19 +113,20 @@ class hitClient:
         return leftHit or rightHit or vert_hit
 
 
-
 class drumGrid:
     """Contains basic parameters for drum kit grid boxes. Gridlines are defined in the x and y directions."""
 
-    open_hat_angle = 70 # Minimum left foot angle to activate an open hat sound
+     # Minimum left foot angle to activate an open hat sound
+    open_hat_angle = 70
 
     # Grid layout mapped top to bottom, right hand side to left hand side
-    grid_layout = [['Special2', 'Special1'], 
-                  ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], 
-                  ['FTom', 'SD', 'Hat', 'Crash'], 
-                  ['BD', 'Hat']]
+    grid_layout = [
+        ['Special2', 'Special1'], 
+        ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], 
+        ['FTom', 'SD', 'Hat', 'Crash'], 
+        ['BD', 'Hat']]
 
-    assets_dir = os.path.join(os.path.pardir, 'assets', 'Used_Audio')
+    assets_dir = os.path.join(os.getcwd(), 'assets', 'Used_Audio')
     drum_sound_paths = {
         'Ride': os.path.join(assets_dir, "ride-acoustic02.wav"),
         'Tom1': os.path.join(assets_dir, "tom-acoustic01.wav"),
@@ -233,13 +235,12 @@ class drumGrid:
                 colMap = j
                 break
 
-        print("x: " + str(xLoc) + ", y: " + str(yLoc))
-        print("Row: " + str(rowMap) + ", Col: " + str(colMap))
-        print(self.grid_layout[rowMap][colMap])
+        logging.debug("x: " + str(xLoc) + ", y: " + str(yLoc))
+        logging.debug("Row: " + str(rowMap) + ", Col: " + str(colMap))
+        logging.debug(self.grid_layout[rowMap][colMap])
 
         return self.grid_layout[rowMap][colMap]
     
-
 
 def avg(x: float | int, y: float | int) -> float:
     """Calculate average of two points"""
