@@ -1,2 +1,8 @@
 # Byte-compiled / optimized / DLL files
 __pycache__
+
+# Sphinx files
+build/
+source/
+make.bat
+Makefile
