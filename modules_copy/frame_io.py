@@ -1,4 +1,5 @@
-"""Includes tools for producing and storing video frames, including camera and program window objects."""
+"""Includes tools for producing and storing video frames with OpenCV, 
+    including camera and program window objects."""
 
 import tkinter as tk
 import cv2
@@ -12,13 +13,15 @@ class frameManager:
 
     def __init__(self):
 
+        cam_port = 0
+        self.cam = camera(cam_port)
+
         self.window = window("Motion Cap")
-        self.cam = camera(0)
         self.window.assignSize(self.cam)
 
         self.framePack = framePackage()
 
-    def getFramePackage(self) -> 'framePack':
+    def getFramePackage(self) -> 'framePackage':
         """Retrieves current video frame and returns frame package."""
 
         newFrame = self.cam.read()

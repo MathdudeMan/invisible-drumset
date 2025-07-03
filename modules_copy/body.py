@@ -3,21 +3,21 @@
 
 from math import degrees, atan2
 
-from .mp_landmarks import mp_landmarks
+from .pose import landmarks
 
 # Init mediapipe pose class, video pose object
 
 
-class Body:
+class body:
     """Holds all landmark data and aggregates into extremity and torso data."""
 
     def __init__(self, window):
 
         # Torso definitions
-        leftShoulder = node(11)
-        rightShoulder = node(12)
-        leftHip = node(23)
-        rightHip = node(24)
+        leftShoulder = mp_Node(11)
+        rightShoulder = mp_Node(12)
+        leftHip = mp_Node(23)
+        rightHip = mp_Node(24)
 
         # Limb definitions
         leftHand = extremity(15, 17, 'Hand', 'Left')
@@ -27,7 +27,7 @@ class Body:
 
         self.torso = [leftShoulder, rightShoulder, leftHip, rightHip]
         self.extremities = [leftHand, rightHand, leftFoot, rightFoot]
-        self.landmarks = mp_landmarks(33)
+        self.landmarks = landmarks(33)
 
         self.maxX = window.width
         self.maxY = window.height
@@ -58,12 +58,12 @@ class Body:
         return True
             
 
-class node:
-    """Saves landmark data for a given body node."""
+class mp_Node:
+    """Saves landmark data for a given mediapipe node."""
 
-    def __init__(self, processor_id: int):
+    def __init__(self, id: int):
 
-        self.processor_id = processor_id
+        self.id = id
         self.x: float
         self.y: float
         self.vis: float
@@ -71,15 +71,15 @@ class node:
     def update(self, landmarkData: dict, windowWidth: int, windowHeight: int):
         """Stores absolute window coordinate value (x,y) in pixels."""
 
-        self.x = landmarkData[self.processor_id]['x'] * windowWidth
-        self.y = landmarkData[self.processor_id]['y'] * windowHeight
-        self.vis = landmarkData[self.processor_id]['vis']
+        self.x = landmarkData[self.id]['x'] * windowWidth
+        self.y = landmarkData[self.id]['y'] * windowHeight
+        self.vis = landmarkData[self.id]['vis']
 
 
 class extremity:
     """Saves information and data of given extremity, represented as a two-point vector with two nodes (head and tail)."""
         
-    def __init__(self, tail_id: int, head_id: int, type: str, side: str):
+    def __init__(self, tail: int, head: int, type: str, side: str):
         """
         - Tail = MediaPipe tail node index (e.g. wrist)
         - Head = MediaPipe head node index (e.g. finger)
@@ -87,8 +87,8 @@ class extremity:
         - Side = 'Right' or 'Left'
         """
 
-        self.tail = node(tail_id)
-        self.head = node(head_id)
+        self.tail = mp_Node(tail)
+        self.head = mp_Node(head)
         self.type = type
         self.side = side
 

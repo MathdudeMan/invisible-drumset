@@ -1,6 +1,6 @@
 """Contains tools for defining and operating the invisible drum kit."""
 
-from .drawing import Button
+from .drawing import button
 import os
 from playsound import playsound
 
@@ -10,7 +10,7 @@ from playsound import playsound
 # import soundfile as sf
 
 
-class DrumsetClient:
+class drumsetClient:
     """Contains functions for playing the invisible on-screen drum kit."""
 
     state_dict = {True: 'On', False: 'Off'}
@@ -150,7 +150,7 @@ class drumGrid:
         self.endX = body.maxX
         self.endY = body.maxY
 
-        self.powButton = Button()
+        self.powButton = button()
         self.powButton.x1 *= self.endX
         self.powButton.x2 *= self.endX
         self.powButton.y1 *= self.endY

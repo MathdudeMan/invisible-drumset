@@ -326,19 +326,14 @@ def main():
 
 
 def avg(x, y):
-# Calculate average of two points
+    """Calculate average of two points"""
 
     average = (x + y) / 2
     return average
 
 
 def updateGrid(torso):
-    """This is cool.
-
-    69 nice
-    
-    """
-
+    """Uses body torso to update gridline locations."""
 
 # Calculate hit grid from torso points
 # hitGrid: [['Special1', 'Special2'], ['Ride', 'Tom2', 'Tom1', 'Hat', 'Crash'], ['FTom', 'SD', 'Hat', 'Crash'], ['BD', 'Hat']]
@@ -467,39 +462,43 @@ def map(extremity, rowRanges, colRanges, powerB, soundCodes):
 
 ####################################################
 
-# Activate Video / Webcam
-cap = cv2.VideoCapture(0)
-capWidth = int(cap.get(3)) #640
-capHeight = int(cap.get(4)) #480
+if __name__ == '__main__':
 
-# Get active screen size (1920 x 1080)
-root = tk.Tk()
-screenWidth, screenHeight = int(root.winfo_screenwidth()), int(root.winfo_screenheight())
+    # Activate Video / Webcam
+    cap = cv2.VideoCapture(0)
+    capWidth = int(cap.get(3)) #640
+    capHeight = int(cap.get(4)) #480
 
-# Scale camera output size so both parameters fill screen
-scale = max((screenWidth / capWidth), (screenHeight / capHeight))
-windowWidth = int(capWidth * scale) #1920
-windowHeight = int(capHeight * scale) #1440
+    # Get active screen size (1920 x 1080)
+    root = tk.Tk()
+    screenWidth, screenHeight = int(root.winfo_screenwidth()), int(root.winfo_screenheight())
 
-# Define fullscreen desktop window (cv2 autoshrinks so frame ratio kept)
-cv2.namedWindow("Motion Cap", cv2.WINDOW_GUI_NORMAL)
-cv2.resizeWindow("Motion Cap", windowWidth, windowHeight)
+    # Scale camera output size so both parameters fill screen
+    scale = max((screenWidth / capWidth), (screenHeight / capHeight))
+    windowWidth = int(capWidth * scale) #1920
+    windowHeight = int(capHeight * scale) #1440
 
-# Main function loop
-extremities = main()
+    # Define fullscreen desktop window (cv2 autoshrinks so frame ratio kept)
+    cv2.namedWindow("Motion Cap", cv2.WINDOW_GUI_NORMAL)
+    cv2.resizeWindow("Motion Cap", windowWidth, windowHeight)
 
-# Uncomment to graph extremity behavior
-for item in extremities:
-    plt.subplot(2,2,1)
-    plt.plot([x for x in range(len(item.angle))], item.angle, label = "angle")
-    plt.subplot(2,2,2)
-    plt.plot([x for x in range(len(item.angVel))], item.angVel, label = "theta")
-    plt.subplot(2,2,3)
-    plt.plot([x for x in range(len(item.vert))], item.vert, label = "vert")
-    plt.subplot(2,2,4)
-    plt.plot([x for x in range(len(item.dVert))], item.dVert, label = "dVert")
+    # Main function loop
+    extremities = main()
 
-plt.show()
+    # Uncomment to graph extremity behavior
+    for item in extremities:
+        plt.subplot(2,2,1)
+        plt.plot([x for x in range(len(item.angle))], item.angle, label = "angle")
+        plt.subplot(2,2,2)
+        plt.plot([x for x in range(len(item.angVel))], item.angVel, label = "theta")
+        plt.subplot(2,2,3)
+        plt.plot([x for x in range(len(item.vert))], item.vert, label = "vert")
+        plt.subplot(2,2,4)
+        plt.plot([x for x in range(len(item.dVert))], item.dVert, label = "dVert")
 
-cap.release()
-cv2.destroyAllWindows()
+    plt.show()
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+

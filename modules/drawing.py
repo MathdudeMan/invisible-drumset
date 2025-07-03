@@ -1,51 +1,50 @@
-"""Contains tools for drawing a frontend overlay on a given video frame."""
+"""Contains tools for drawing a frontend overlay on a given video frame with OpenCV."""
 
 import cv2
 
 
-class drawClient:
+class DrawingClient:
     """Performs drawing operations on current frame."""
 
     def __init__(self, window):
         
         self.overlays = dict({
-            'On': overlay(window.width, window.height, 
-                          (0,255,0), "Power: ON", "Hit Here to Switch", (20, 20, 20), (240, 240, 255), bootTextOn = False),
-            'Off': overlay(window.width, window.height, 
-                           (0, 0, 255), "Power: OFF", "(Hit Here to Switch)", (80, 80, 80), (200, 200, 255), bootTextOn = False),
-            'Out': overlay(window.width, window.height, 
-                           (50, 90, 0), "Power: OFF", "(Enter Frame to Use)", (60, 60, 60), (150, 150, 150), bootTextOn = True)
+            'On': Overlay(window.width, window.height, 
+                          (0,255,0), "Power: ON", "Hit Here to Switch", (20, 20, 20), (240, 240, 255), titleTextActive = False),
+            'Off': Overlay(window.width, window.height, 
+                           (0, 0, 255), "Power: OFF", "(Hit Here to Switch)", (80, 80, 80), (200, 200, 255), titleTextActive = False),
+            'Out': Overlay(window.width, window.height, 
+                           (50, 90, 0), "Power: OFF", "(Enter Frame to Use)", (60, 60, 60), (150, 150, 150), titleTextActive = True)
         })
 
-    def drawOverlay(self, frame, body, state: str, mirror) -> 'image':
+    def drawOverlay(self, frame, state: str, mirror: bool) -> 'image':
         """Draw overlay given current program state."""
 
-        frameEdit = self.overlays[state].draw(frame, body, mirror)
+        frameEdit = self.overlays[state].draw(frame, mirror)
         return frameEdit
 
 
-class overlay:
+# TODO Finish default overlays
+class Overlay:
     """Stores overlay content of a given state, including border, button, and title text."""
 
-    def __init__(self, windowWidth: int, windowHeight: int, borderColor: tuple, btnText: str, btnSubText: str, btnColor: tuple, btnTextColor: str, bootTextOn: bool):
+    def __init__(self, windowWidth: int, windowHeight: int, borderColor: tuple, btnText: str, btnSubText: str, btnColor: tuple, btnTextColor: tuple, titleTextActive: bool):
 
         self.width = windowWidth
         self.height = windowHeight
-        self.border = border(borderColor)
+        self.border = Border(borderColor)
         self.button = powButton(btnText, btnSubText, btnColor, btnTextColor)
         
-        if bootTextOn:
+        if titleTextActive:
             self.titleText = titleText()
         else:
             self.titleText = None
 
-    def draw(self, frame, body, mirror) -> 'image':
+    def draw(self, frame, mirror: bool) -> 'image':
         """
-        Draw landmarks, button, title text, and border onto a frame. Flips frame if image Mirror active.
+        Draw button, title text, and border onto a frame. Flips frame if image Mirror active.
         Returns edited frame.
         """
-
-        body.landmarks.draw(frame)
 
         if mirror == True:
             frame = cv2.flip(frame, 1)
@@ -58,8 +57,35 @@ class overlay:
         frame = self.border.draw(frame, self.width, self.height)
         return frame
 
+# TODO
+class OnOverlay(Overlay):
+    def __init__(self, windowWidth: int, windowHeight: int, borderColor: tuple = (0,255,0), btnText: str = "Power: ON", btnSubText: str = "Hit Here to Switch", btnColor: tuple = (20, 20, 20), btnTextColor: tuple = (240, 240, 255), titleTextActive: bool = False):
 
-class border:
+        self.width = windowWidth
+        self.height = windowHeight
+        self.border = Border(borderColor)
+        self.button = powButton(btnText, btnSubText, btnColor, btnTextColor)
+        
+        if titleTextActive:
+            self.titleText = titleText()
+        else:
+            self.titleText = None
+
+# TODO
+class OffOverlay(Overlay):
+    def __init__(self, windowWidth: int, windowHeight: int, borderColor: tuple = (0,255,0), btnText: str = "Power: ON", btnSubText: str = "Hit Here to Switch", btnColor: tuple = (20, 20, 20), btnTextColor: tuple = (240, 240, 255), titleTextActive: bool = False):
+
+        self.width = windowWidth
+        self.height = windowHeight
+        self.border = Border(borderColor)
+        self.button = powButton(btnText, btnSubText, btnColor, btnTextColor)
+        
+        if titleTextActive:
+            self.titleText = titleText()
+        else:
+            self.titleText = None
+
+class Border:
     """Creates solid-color border around given frame."""
     
     borderThickness = 0.05
@@ -79,7 +105,7 @@ class border:
         return frame
 
 
-class button:
+class Button:
     """Contains static power button location parameters (top left corner and bottom right corner coordinates).
     
     *(Called by drumGrid class in drumset.py)*"""
@@ -90,7 +116,7 @@ class button:
     y2 = 0.25
     
 
-class powButton(button):
+class powButton(Button):
     """Creates button denoting current state, which may be hit by user to change."""
     
     powX = 0.045
