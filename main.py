@@ -1,87 +1,58 @@
-from modules.frame_io import FrameManager, window, camera, framePackage
-from modules.body import Body
-from modules.drawing import DrawingClient
-from modules.drumset import DrumsetClient
+from src.cv2_camera import Window, Camera
+from src.processor import ImageProcessor
 
+import tkinter as tk
+import logging
 import cv2
+
+tk.Tk().withdraw()
+root = tk.Tk()
+SCREEN_WIDTH = int(root.winfo_screenwidth())  # 1920
+SCREEN_HEIGHT = int(root.winfo_screenheight())  # 1440
 
 CAMERA_PORT = 0
 
 
-class App:
+class DrumsetApp:
 
     def __init__(self):
 
-        self.cam = camera(CAMERA_PORT)
-        self.window = window("Motion Cap")
-        self.window.assignSize(self.cam)
+        # initialize camera
+        self.cam = Camera(CAMERA_PORT)
+        self.is_image_mirrored = True
 
-        self.enabled = True
-        self.state = 'Off'
+        self.window_title = "Motion Cap"
+        self.window = Window(self.window_title, SCREEN_WIDTH, SCREEN_HEIGHT)
 
-        # self.frame_manager = FrameManager()
-        # self.window = self.frame_manager.window
-
-        self.body = Body(self.window)
-        self.drawing_client = DrawingClient(self.window)
-        self.drumset = DrumsetClient(self.body)
-
-        self.current_frame = None
-        self.image_mirrored = True
-
-    def getFramePackage(self) -> framePackage:
-        """Retrieves current video frame and returns frame package."""
-
-        newFrame = self.cam.read()
-        framePack = framePackage()
-        framePack.packImage(newFrame, self.window.width, self.window.height)
-        return framePack
-    
-    def display_frame(self, frame) -> bool:
-        """Returns True if window remains open after frame, False if closed."""
-    
-        cv2.imshow(self.window.title, frame)
-
-        # Frame buffer (Conditional is always False)
-        if cv2.waitKey(2) == -2:
-            pass
-
-        # If window closed, end program activity. Responsible for ending program.
-        if cv2.getWindowProperty(self.window.title, cv2.WND_PROP_VISIBLE) < 1:
-            self.cam.close
-            return False
-        
-        return True
+        camera_width, camera_height = self.cam.get_dimensions()
+        self.image_processor = ImageProcessor(camera_width, camera_height)
 
     def run(self):
         """Run main app loop."""
-        
-        while self.enabled == True:
-        
+
+        self.enabled = True
+
+        while self.enabled:
+
             # Get frame
-            self.current_frame = self.getFramePackage()
-            self.body.update(self.current_frame.imgReadable)
+            img_success, newFrame = self.cam.read()
+            if not img_success:
+                logging.error("No image from camera")
+                self.enabled = False
+                break
 
-            if self.body.isInFrame:
-                self.state = self.drumset.playDrum(self.image_mirrored)
-            else:
-                self.drumset.sound_active = False
-                self.state = 'Out'
-
-            # Draw on frame
-            self.current_frame.imgOutput = self.drawing_client.drawOverlay(self.current_frame.imgOutput,            
-                                                           self.state, self.image_mirrored)
-            self.body.landmarks.draw(self.current_frame.imgOutput)
+            # Process frame and generate audio
+            newFrame = self.image_processor.process_frame(
+                newFrame, self.is_image_mirrored
+            )
 
             # Display frame
-            self.enabled = self.display_frame(self.current_frame.imgOutput)
+            self.enabled = self.window.display_frame(newFrame)
 
-
-def main():
-
-    newApp = App()
-    newApp.run()
+        self.cam.close()
 
 
 if __name__ == "__main__":
-    main()
+
+    newApp = DrumsetApp()
+    newApp.run()
