@@ -1,54 +1,39 @@
 from math import degrees, atan2
-import enum
+from .utils import Side, ExtremityType
 
 
 class Node:
     """Saves landmark data for a given body node."""
 
-    def __init__(self, landmark_id: int):
+    def __init__(self):
 
-        self.landmark_id = landmark_id
         self.x: float
         self.y: float
         self.vis: float
 
-    def update(self, landmarkData: dict, windowWidth: int, windowHeight: int):
+    def update(self, landmarkData: dict):
         """Stores absolute window coordinate value (x,y) in pixels."""
 
-        self.x = landmarkData[self.landmark_id]["x"] * windowWidth
-        self.y = landmarkData[self.landmark_id]["y"] * windowHeight
-        self.vis = landmarkData[self.landmark_id]["vis"]
+        self.x = landmarkData["x"]
+        self.y = landmarkData["y"]
+        self.vis = landmarkData["vis"]
+
+
+class Torso:
+    """Saves information and data of torso, represented with four nodes (left shoulder, right shoulder, left hip, right hip)."""
+
+    def __init__(self):
+
+        self.leftShoulder = Node()
+        self.rightShoulder = Node()
+        self.leftHip = Node()
+        self.rightHip = Node()
 
 
 class Extremity:
     """Saves information and data of given extremity, represented as a two-point vector with two nodes (head and tail)."""
 
-    def __init__(self, tail_id: int, head_id: int, type: str, side: str):
-        """
-        - Tail = MediaPipe tail node index (e.g. wrist)
-        - Head = MediaPipe head node index (e.g. finger)
-        - Type = 'Hand' or 'Foot'
-        - Side = 'Right' or 'Left'
-        """
-
-        self.tail = Node(tail_id)
-        self.head = Node(head_id)
-        self.type = type
-        self.side = side
-
-        # Angles & angular velocities
-        self.angle = []
-        self.angVel = []
-
-        # Vertical component and change thereof
-        self.vert = []
-        self.dVert = []
-
-    def update(self, landmarkData: dict, windowWidth: int, windowHeight: int):
-
-        self.tail.update(landmarkData, windowWidth, windowHeight)
-        self.head.update(landmarkData, windowWidth, windowHeight)
-        self._updateAngles()
+    queueSize = 3
 
     # Minimum visibility value for hitCheck
     visMin = 0.5
@@ -61,11 +46,43 @@ class Extremity:
     wRatio = 0.4
     vRatio = 0.3
 
-    minAngle = 20  # Hand angle hit threshold
+    # Hand angle hit threshold
+    minAngle = 20
     maxAngle = 150
-    midMin = 80  # Midrange hit threshold
+
+    # Midrange hit threshold
+    midMin = 80
     midMax = 100
-    angleSwap = 300  # Min angle change to detect sign change (e.g. + to -)
+
+    # Min angle change to detect sign change (e.g. + to -)
+    angleSwap = 300
+
+    def __init__(self, type: ExtremityType, side: Side):
+        """
+        - Tail = MediaPipe tail node index (e.g. wrist)
+        - Head = MediaPipe head node index (e.g. finger)
+        - Type = 'Hand' or 'Foot'
+        - Side = 'Right' or 'Left'
+        """
+
+        self.tail = Node()
+        self.head = Node()
+        self.type = type
+        self.side = side
+
+        # Angles & angular velocities
+        self.angle = []
+        self.angVel = []
+
+        # Vertical component and change thereof
+        self.vert = []
+        self.dVert = []
+
+    def update(self, landmark_data_1: dict, landmark_data_2: dict):
+
+        self.tail.update(landmark_data_1)
+        self.head.update(landmark_data_2)
+        self._update_angles()
 
     def check_hit(self) -> bool:
         """Checks extremity for hit based on change in changes in angle or vertical components.
@@ -92,13 +109,13 @@ class Extremity:
 
         vert_check = False
         # Criteria for enabling Vertical Velocity check
-        if self.type == "Hand":
+        if self.type == ExtremityType.HAND:
             vert_check = (
                 abs(a) < self.minAngle
                 or abs(a) > self.maxAngle
                 or self.midMin < abs(a) < self.midMax
             )
-        elif self.type == "Foot":
+        elif self.type == ExtremityType.FOOT:
             vert_check = True
 
         # Check for sharp min in absolute angular velocity / vertical velocity
@@ -116,7 +133,7 @@ class Extremity:
 
         return leftHit or rightHit or vert_hit
 
-    def _updateAngles(self):
+    def _update_angles(self):
         """Update angle/vertical components and change rates."""
 
         # Relative locations normalized to window size
@@ -146,10 +163,10 @@ class Extremity:
     def _pop_stacks(self):
         """Clears past data for angles and verticals."""
 
-        if len(self.angVel) > 3:
+        if len(self.angVel) > self.queueSize:
             self.angle.pop(0)
             self.angVel.pop(0)
 
-        if len(self.dVert) > 3:
+        if len(self.dVert) > self.queueSize:
             self.vert.pop(0)
             self.dVert.pop(0)

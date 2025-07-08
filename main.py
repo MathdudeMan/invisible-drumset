@@ -1,9 +1,9 @@
-from src.cv2_camera import Window, Camera
-from src.processor import ImageProcessor
+from peripherals.camera import Camera
+from peripherals.window import Window
+from image_processor.image_processor import ImageProcessor
 
 import tkinter as tk
 import logging
-import cv2
 
 tk.Tk().withdraw()
 root = tk.Tk()
@@ -19,7 +19,7 @@ class DrumsetApp:
 
         # initialize camera
         self.cam = Camera(CAMERA_PORT)
-        self.is_image_mirrored = True
+        self.mirror_output = True
 
         self.window_title = "Motion Cap"
         self.window = Window(self.window_title, SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -43,7 +43,7 @@ class DrumsetApp:
 
             # Process frame and generate audio
             newFrame = self.image_processor.process_frame(
-                newFrame, self.is_image_mirrored
+                newFrame, is_image_mirrored=self.mirror_output
             )
 
             # Display frame

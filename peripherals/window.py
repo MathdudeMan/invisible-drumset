@@ -1,8 +1,6 @@
-"""Includes tools for producing and storing video frames with OpenCV,
-including camera and program window objects."""
-
 import cv2
-from numpy.typing import NDArray
+
+from .camera import Camera
 
 
 class Window:
@@ -16,7 +14,7 @@ class Window:
         cv2.namedWindow(self.title, cv2.WINDOW_GUI_NORMAL)
         cv2.resizeWindow(self.title, self.width, self.height)
 
-    def scale_to_screen(self, cam: "Camera", screenWidth: int, screenHeight: int):
+    def scale_to_screen(self, cam: Camera, screenWidth: int, screenHeight: int):
         """Scale window so both height and width span the screen."""
 
         cam_width, cam_height = cam.get_dimensions()
@@ -45,30 +43,3 @@ class Window:
             return False
 
         return True
-
-
-class Camera:
-    """Holds data for camera used."""
-
-    CAPTURE_WIDTH_ID = 3
-    CAPTURE_HEIGHT_ID = 4
-
-    def __init__(self, port: int):
-
-        self.cap = cv2.VideoCapture(port)
-
-    def read(self) -> tuple[bool, NDArray]:
-
-        return self.cap.read()
-
-    def get_dimensions(self) -> tuple[int, int]:
-
-        width = int(self.cap.get(self.CAPTURE_WIDTH_ID))
-        height = int(self.cap.get(self.CAPTURE_HEIGHT_ID))
-
-        return width, height
-
-    def close(self):
-
-        self.cap.release()
-        cv2.destroyAllWindows

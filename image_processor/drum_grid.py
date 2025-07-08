@@ -7,8 +7,7 @@ import enum
 from .drawing_utils.buttons import Button, PowerButton
 from .body_parts import Node
 from .audio import AudioDevice
-
-# from .enums import State
+from .utils import ExtremityType, Side
 
 
 class Drums(enum.Enum):
@@ -16,14 +15,15 @@ class Drums(enum.Enum):
     TOM1 = 1
     TOM2 = 2
     HAT = 3
-    HATOPEN = 4
+    HAT_OPEN = 4
     CRASH = 5
-    FTOM = 6
+    FLOOR_TOM = 6
     SD = 7
     BD = 8
     SPECIAL1 = 9
     SPECIAL2 = 10
     BUTTON = 11
+    AIR = 12
 
 
 def average(x: float | int, y: float | int) -> float:
@@ -43,7 +43,7 @@ class DrumGrid:
     grid_layout = [
         [Drums.SPECIAL2, Drums.SPECIAL1],
         [Drums.RIDE, Drums.TOM2, Drums.TOM1, Drums.HAT, Drums.CRASH],
-        [Drums.FTOM, Drums.SD, Drums.HAT, Drums.CRASH],
+        [Drums.FLOOR_TOM, Drums.SD, Drums.HAT, Drums.CRASH],
         [Drums.BD, Drums.HAT],
     ]
 
@@ -53,9 +53,9 @@ class DrumGrid:
         Drums.TOM1: os.path.join(assets_dir, "tom-acoustic01.wav"),
         Drums.TOM2: os.path.join(assets_dir, "tom-acoustic02.wav"),
         Drums.HAT: os.path.join(assets_dir, "hihat-acoustic01.wav"),
-        Drums.HATOPEN: os.path.join(assets_dir, "hihat-dist02.wav"),
+        Drums.HAT_OPEN: os.path.join(assets_dir, "hihat-dist02.wav"),
         Drums.CRASH: os.path.join(assets_dir, "crash-acoustic.wav"),
-        Drums.FTOM: os.path.join(assets_dir, "tom-rototom.wav"),
+        Drums.FLOOR_TOM: os.path.join(assets_dir, "tom-rototom.wav"),
         Drums.SD: os.path.join(assets_dir, "snare-acoustic01.wav"),
         Drums.BD: os.path.join(assets_dir, "kick-classic.wav"),
         Drums.SPECIAL1: os.path.join(assets_dir, "clap-808.wav"),
@@ -145,12 +145,12 @@ class DrumGrid:
         y = extremity.head.y
 
         if not (0 < x < self.endX and 0 < y < self.endY):
-            return ""
+            return Drums.AIR
 
         # Auto-map feet
-        if extremity.type == "Foot" and extremity.side == "Left":
+        if extremity.type == ExtremityType.FOOT and extremity.side == Side.LEFT:
             return Drums.HAT
-        elif extremity.type == "Foot" and extremity.side == "Right":
+        elif extremity.type == ExtremityType.FOOT and extremity.side == Side.RIGHT:
             return Drums.BD
 
         # Check for button hit
@@ -169,7 +169,7 @@ class DrumGrid:
 
         # Open Hi Hat when left foot angled upwards
         if mapVal == Drums.HAT and self.hihat_open:
-            mapVal = Drums.HATOPEN
+            mapVal = Drums.HAT_OPEN
 
         return mapVal
 

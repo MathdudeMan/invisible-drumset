@@ -1,4 +1,14 @@
 import enum
+from typing import NamedTuple, Dict
+
+
+# class Landmark(Dict):
+#     x: float
+#     y: float
+#     vis: float
+
+
+# Landmark = Dict[str, float]
 
 
 class Side(enum.Enum):

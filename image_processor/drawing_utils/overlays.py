@@ -2,10 +2,10 @@
 
 from numpy.typing import NDArray
 
-from .drawing_utils.buttons import PowerButton
-from .drawing_utils.border import Border, TitleText
+from .buttons import PowerButton
+from .border import Border, TitleText
 
-from .enums import State
+from ..utils import State
 
 
 class DrawingClient:

@@ -1,6 +1,6 @@
 from .body import Body
-from .enums import State
-from .cv2_drawing import DrawingClient
+from .utils import State
+from .drawing_utils.overlays import DrawingClient
 
 from numpy.typing import NDArray
 import cv2
@@ -18,7 +18,10 @@ class ImageProcessor:
         self.drawing_client = DrawingClient()
 
     def process_frame(
-        self, newFrame: NDArray, draw_landmarks: bool = True, is_image_mirrored=False
+        self,
+        newFrame: NDArray,
+        is_image_mirrored: bool = False,
+        draw_landmarks: bool = True,
     ) -> NDArray:
         """Update body attributes for given frame and perform drawing and audio processing."""
 

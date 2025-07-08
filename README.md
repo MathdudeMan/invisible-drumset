@@ -2,13 +2,11 @@
 
 Inspired by Rowan Atkinson's classic air drumming act, this Python app enables a user to play on their own invisible drum kit.
 
-The app functions using Mediapipe Pose, a Pose Estimation library developed by Google, and OpenCV, a library for live video and image processing for Computer Vision (CV) applications. A "hitCheck" function in the program responds whenever a hand or foot performs a midair "Hit" with a drum sound appropriate to its relative location.
-
-This app does not require extensive drum set experience, though some familiarity is recommended.
+The app functions using Mediapipe Solutions Pose Landmark Estimation, a Pose Estimation library developed by Google, and OpenCV, a library for live video and image processing for Computer Vision (CV) applications. Each frame is run through Mediapipe's pose estimation algorithm, whose outputs constructs a "drum grid" of drum positions for that frame. Then, each limb is mathematically checked for "hitting" an object, to which the drum grid layer responds with an appropriate soundfile.
 
 ## Installation and Physical Setup
 
-To use the app, clone the content in this repository or download and extract the .zip file, then run `drumset_app.exe`.
+To use the app, download the latest release or clone the content in this repository, then build with
 
 `git clone https://github.com/MathdudeMan/invisible-drumset`
 
@@ -16,7 +14,7 @@ The app is set by default to use the user's webcam (or the computer's primary ca
 
 ## How It Works
 
-`drumset_app.exe` outputs a fullscreen window containing the mirrored webcam capture. Drum "hits" are determined by calculating the real-time changes in velocity of each extremity (hands and feet) of the user - a good down-up wrist snap should trigger this.
+The app outputs a fullscreen window containing the mirrored webcam capture. Drum "hits" are determined by calculating the real-time changes in velocity of each extremity (hands and feet) of the user - a good down-up wrist snap should trigger this.
 
 The app operates between three different states, controlled by screen presence and operation of the corner Power button:
 
@@ -31,7 +29,7 @@ The "drum kit" and associated audio is powered off by default. To activate the k
 
 ### Mediapipe Pose
 
-**Mediapipe Pose** detects 32 standard nodes from the human body. The source code configures these as shown:
+**Mediapipe Solutions Pose Landmark Detection** detects 32 standard nodes from the human body. The source code configures these as shown:
 
 ![MediaPipe Nodes](./assets/readme_images/Nodes_Edit.png)
 
@@ -47,14 +45,12 @@ For reference, extremity angles are calculated using the following degree plane:
 
 When a hit is registered, the program uses a "hit grid" to map what drum or cymbal in the hypothetical drum kit was "hit." This hit grid holds row/column ranges based on the user's present location in the frame, which are then mapped to drum set components. The grid ranges are recalculated each frame based on the user's hip and shoulder locations. This method allows accurate drum mapping regardless of the location or size of the user in the frame.
 
-#### Hit Grid (After Image Mirroring):
+#### Drum Grid:
 
-![Hit Grid](./assets/readme_images/Grid_Diagram.png)
+![Drum Grid](./assets/readme_images/Grid_Diagram.png)
 
 Finally, the program uses the **playsound** library to output the drum audio mapped to the hit location. Note that there is a buffer built in to the **playsound** library, so audio playback for hits is not instant.
 
-## Licensing
+## Sound Effect Licensing
 
 All sound effects in this app are obtained from from ![Freesound.org](https://freesound.org/), a repository for free and open source audio.
-
-This project is copyright protected by the MIT License.
