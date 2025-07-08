@@ -5,10 +5,10 @@ from image_processor.image_processor import ImageProcessor
 import tkinter as tk
 import logging
 
-tk.Tk().withdraw()
 root = tk.Tk()
 SCREEN_WIDTH = int(root.winfo_screenwidth())  # 1920
 SCREEN_HEIGHT = int(root.winfo_screenheight())  # 1440
+root.withdraw()
 
 CAMERA_PORT = 0
 

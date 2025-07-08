@@ -4,9 +4,9 @@ import os
 import logging
 import enum
 
-from .drawing_utils.buttons import Button, PowerButton
-from .body_parts import Node
-from .audio import AudioDevice
+from .drawing_utils.buttons import Button
+from .body_parts import Node, Extremity
+from .audio_device import AudioDevice
 from .utils import ExtremityType, Side
 
 
@@ -138,7 +138,7 @@ class DrumGrid:
             [0, torsoSplitX, self.endX],
         ]
 
-    def get_location_id(self, extremity, img_mirrored: bool) -> Drums:
+    def get_location_id(self, extremity: Extremity, img_mirrored: bool) -> Drums:
         """Determines present map id of limb. Calculates location and returns the associated string identifier."""
 
         x = extremity.head.x
@@ -173,13 +173,12 @@ class DrumGrid:
 
         return mapVal
 
-    def play_drum(self, extremity, mapVal: Drums):
+    def play_drum(self, extremity: Extremity, mapVal: Drums):
 
         isHit = extremity.check_hit()
         if isHit is False:
             return
 
-        # FIXME Image mirror
         mapVal = self.get_location_id(extremity, True)
 
         if mapVal == "":

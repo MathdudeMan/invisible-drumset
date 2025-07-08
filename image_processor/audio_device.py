@@ -8,9 +8,6 @@ from playsound import playsound
 
 class AudioDevice:
 
-    def __init__(self):
-        pass
-
     def play_audiofile(self, audio_file: str):
 
         playsound(audio_file, block=False)

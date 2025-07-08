@@ -1,5 +1,7 @@
-# Byte-compiled / optimized / DLL files
+
+# Caches
 __pycache__
+*cache*
 
 # Sphinx files
 build/
@@ -9,3 +11,6 @@ Makefile
 
 # Dependencies
 *venv
+
+# Other files
+first_draft.py

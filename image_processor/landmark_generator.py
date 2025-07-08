@@ -1,11 +1,19 @@
 from mediapipe.python.solutions import drawing_utils, pose
 from mediapipe.python.solutions.pose import PoseLandmark, Pose
+import mediapipe.python.solution_base
 from numpy.typing import NDArray
 import logging
+from typing import TypedDict
 
-# from .utils import Landmark
+from .utils import Landmark
 
 pose_reader = Pose()
+
+
+class mp_landmarks(TypedDict):
+    pose_landmarks: dict[int, Landmark]
+    pose_world_landmarks: dict[int, Landmark]
+    segmentation_mask: NDArray
 
 
 class LandmarkGenerator:
@@ -16,9 +24,7 @@ class LandmarkGenerator:
         self.length = 33
         self.landmarks_normalized = True
         self.landmarks = None
-
-        pointStructure = dict.fromkeys(["x", "y", "z", "vis"], None)
-        self.data = dict.fromkeys(range(self.length), pointStructure)
+        self.data: dict[int, Landmark] = {}
 
     def update_data(self, image: NDArray, draw_landmarks: bool) -> None:
         """Updates current landmarks dictionary with input image."""
@@ -39,8 +45,8 @@ class LandmarkGenerator:
             self.data[mark] = {
                 "x": coordinate.x,
                 "y": coordinate.y,
+                "z": coordinate.z,
                 "vis": coordinate.visibility,
-                # 'z': coordinate.z,
             }
 
         if self.landmarks_normalized:
@@ -51,7 +57,7 @@ class LandmarkGenerator:
         if draw_landmarks:
             self.draw_landmarks(image)
 
-    def get_torso_data(self) -> tuple[dict, dict, dict, dict]:
+    def get_torso_data(self) -> tuple[Landmark, Landmark, Landmark, Landmark]:
 
         left_shoulder = self.data[PoseLandmark.LEFT_SHOULDER]
         right_shoulder = self.data[PoseLandmark.RIGHT_SHOULDER]
@@ -60,44 +66,44 @@ class LandmarkGenerator:
 
         return left_shoulder, right_shoulder, left_hip, right_hip
 
-    def get_left_shoulder_data(self) -> dict:
+    def get_left_shoulder_data(self) -> Landmark:
 
         return self.data[PoseLandmark.LEFT_SHOULDER]
 
-    def get_right_shoulder_data(self) -> dict:
+    def get_right_shoulder_data(self) -> Landmark:
 
         return self.data[PoseLandmark.RIGHT_SHOULDER]
 
-    def get_left_hip_data(self) -> dict:
+    def get_left_hip_data(self) -> Landmark:
 
         return self.data[PoseLandmark.LEFT_HIP]
 
-    def get_right_hip_data(self) -> dict:
+    def get_right_hip_data(self) -> Landmark:
 
         return self.data[PoseLandmark.RIGHT_HIP]
 
-    def get_left_hand_data(self) -> tuple[dict, dict]:
+    def get_left_hand_data(self) -> tuple[Landmark, Landmark]:
 
         left_wrist = self.data[PoseLandmark.LEFT_WRIST]
         left_pinky = self.data[PoseLandmark.LEFT_PINKY]
 
         return left_wrist, left_pinky
 
-    def get_right_hand_data(self) -> tuple[dict, dict]:
+    def get_right_hand_data(self) -> tuple[Landmark, Landmark]:
 
         right_wrist = self.data[PoseLandmark.RIGHT_WRIST]
         right_pinky = self.data[PoseLandmark.RIGHT_PINKY]
 
         return right_wrist, right_pinky
 
-    def get_left_foot_data(self) -> tuple[dict, dict]:
+    def get_left_foot_data(self) -> tuple[Landmark, Landmark]:
 
         left_heel = self.data[PoseLandmark.LEFT_HEEL]
         left_foot_index = self.data[PoseLandmark.LEFT_FOOT_INDEX]
 
         return left_heel, left_foot_index
 
-    def get_right_foot_data(self) -> tuple[dict, dict]:
+    def get_right_foot_data(self) -> tuple[Landmark, Landmark]:
 
         right_heel = self.data[PoseLandmark.RIGHT_HEEL]
         right_foot_index = self.data[PoseLandmark.RIGHT_FOOT_INDEX]
@@ -110,7 +116,7 @@ class LandmarkGenerator:
         drawing_utils.draw_landmarks(
             image,
             self.landmarks,
-            connections=pose.POSE_CONNECTIONS,
+            connections=list(pose.POSE_CONNECTIONS),
             landmark_drawing_spec=drawing_utils.DrawingSpec(
                 color=(255, 255, 255), thickness=2, circle_radius=2
             ),

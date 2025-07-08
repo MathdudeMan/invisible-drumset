@@ -1,5 +1,5 @@
 from math import degrees, atan2
-from .utils import Side, ExtremityType
+from .utils import Side, ExtremityType, Landmark
 
 
 class Node:
@@ -11,7 +11,7 @@ class Node:
         self.y: float
         self.vis: float
 
-    def update(self, landmarkData: dict):
+    def update(self, landmarkData: Landmark):
         """Stores absolute window coordinate value (x,y) in pixels."""
 
         self.x = landmarkData["x"]
@@ -19,15 +19,15 @@ class Node:
         self.vis = landmarkData["vis"]
 
 
-class Torso:
-    """Saves information and data of torso, represented with four nodes (left shoulder, right shoulder, left hip, right hip)."""
+# class Torso:
+#     """Saves information and data of torso, represented with four nodes (left shoulder, right shoulder, left hip, right hip)."""
 
-    def __init__(self):
+#     def __init__(self):
 
-        self.leftShoulder = Node()
-        self.rightShoulder = Node()
-        self.leftHip = Node()
-        self.rightHip = Node()
+#         self.leftShoulder = Node()
+#         self.rightShoulder = Node()
+#         self.leftHip = Node()
+#         self.rightHip = Node()
 
 
 class Extremity:
@@ -78,7 +78,7 @@ class Extremity:
         self.vert = []
         self.dVert = []
 
-    def update(self, landmark_data_1: dict, landmark_data_2: dict):
+    def update(self, landmark_data_1: Landmark, landmark_data_2: Landmark):
 
         self.tail.update(landmark_data_1)
         self.head.update(landmark_data_2)

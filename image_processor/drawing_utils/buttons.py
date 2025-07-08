@@ -1,5 +1,6 @@
 import cv2
 from numpy.typing import NDArray
+import textwrap
 
 
 class Button:
@@ -37,12 +38,14 @@ class PowerButton(Button):
         bR = (int(self.x2 * frameWidth), int(self.y2 * frameHeight))
 
         frame = cv2.rectangle(frame, tL, bR, color=self.color, thickness=-1)
+
+        # for word in self.stateText.split():
         frame = cv2.putText(
             frame,
             self.stateText,
             (int(self.powX * frameWidth), int(self.powY * frameHeight)),
             cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=1,
+            fontScale=0.75,
             color=self.textColor,
             thickness=2,
             lineType=cv2.LINE_AA,
@@ -53,11 +56,25 @@ class PowerButton(Button):
             self.subText,
             (int(self.subX * frameWidth), int(self.subY * frameHeight)),
             cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=1,
+            fontScale=0.5,
             color=self.textColor,
             thickness=2,
             lineType=cv2.LINE_AA,
             bottomLeftOrigin=False,
         )
+
+        # for i, line in enumerate(wrapped_text):
+        #     textsize = cv2.getTextSize(line, font, font_size, font_thickness)[0]
+
+        #     gap = textsize[1] + 10
+
+        #     y = int((img.shape[0] + textsize[1]) / 2) + i * gap
+        #     x = int((img.shape[1] - textsize[0]) / 2)
+
+        #     cv2.putText(img, line, (x, y), font,
+        #                 font_size,
+        #                 (0,0,0),
+        #                 font_thickness,
+        #                 lineType = cv2.LINE_AA)
 
         return frame
