@@ -1,10 +1,6 @@
 # Air Drumming Recognition Model
 
 <img
-  style="display: block; 
-           margin-left: auto;
-           margin-right: auto;
-           width: 50%;"
   src="./assets/readme_images/app_screenshot.webp" 
   alt="Drumset App" 
 />
@@ -57,7 +53,7 @@ Each frame, Mediapipe returns the x, y, and visibility (0 - 1) parameters for ea
   alt="Degree Circle" 
 />
 
-When a hit is registered, the program uses the extremity's location in frame and the "hit grid" below to map to a drum or cymbal. The grid ranges are recalculated each frame based on the user's hip and shoulder locations. This method allows for more accurate drum mapping regardless of the user's position in the frame.
+When a hit is registered, the program uses the extremity's location in frame and the "hit grid" below to map to a drum or cymbal. The grid ranges are recalculated each frame based on the user's hip and shoulder locations. This method allows for more accurate drum mapping regardless of the user's position in the frame. Once mapped, the designated audio sample is played (with unfortunately high latency, thanks to the Python runtime).
 
 #### Drum Grid:
 
@@ -70,6 +66,4 @@ When a hit is registered, the program uses the extremity's location in frame and
   alt="Drum Grid" 
 />
 
-All sound samples in this app are obtained from from ![Freesound.org](https://freesound.org/). These are free and open-source.
-
-There is high latency to audio sample playback, due largely to the Python runtime.
+All audio samples in this app are obtained from from ![Freesound.org](https://freesound.org/). These are free and open-source.
