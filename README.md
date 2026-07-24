@@ -4,6 +4,8 @@ Inspired by Rowan Atkinson's classic air drumming act, this Python app enables a
 
 The app functions using Google's Mediapipe Solutions Pose Landmark Estimation as a base model, with OpenCV for pre-processing and post-processing. The Mediapipe outputs construct a "drum grid" of drum positions for each frame. Then, each limb is checked for "hitting" an object based on a sliding-window angle-calculation algorithm, to which the app responds with the appropriate sound sample.
 
+![MediaPipe Nodes](./assets/readme_images/app_screenshot.webp)
+
 ## Installation and Physical Setup
 
 To use the app, clone the repo and run `main.py`. The app may be packaged using **pyinstaller**.
