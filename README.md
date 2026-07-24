@@ -1,8 +1,4 @@
-# Invisible Drum Set App
-
-Inspired by Rowan Atkinson's classic air drumming act, this Python app enables a user to play on their own invisible drum kit.
-
-The app functions using Google's Mediapipe Solutions Pose Landmark Estimation as a base model, with OpenCV for pre-processing and post-processing. The Mediapipe outputs construct a "drum grid" of drum positions for each frame. Then, each limb is checked for "hitting" an object based on a sliding-window angle-calculation algorithm, to which the app responds with the appropriate sound sample.
+# Air Drumming Recognition Model
 
 <img
   style="display: block; 
@@ -12,6 +8,10 @@ The app functions using Google's Mediapipe Solutions Pose Landmark Estimation as
   src="./assets/readme_images/app_screenshot.webp" 
   alt="Drumset App" 
 />
+
+Inspired by Rowan Atkinson's classic air drumming act, this air drumming model, packaged as a simple Python app, enables a user to play on their own invisible drum kit.
+
+The app functions using Google's Mediapipe Solutions Pose Landmark Estimation as a base model, with OpenCV for pre-processing and post-processing. The Mediapipe outputs construct a "drum grid" of drum positions for each frame. Then, each limb is checked for "hitting" an object based on a sliding-window angle-calculation algorithm, to which the app responds with the appropriate sound sample.
 
 ## Installation and Physical Setup
 
