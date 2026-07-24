@@ -4,7 +4,7 @@ Inspired by Rowan Atkinson's classic air drumming act, this Python app enables a
 
 The app functions using Google's Mediapipe Solutions Pose Landmark Estimation as a base model, with OpenCV for pre-processing and post-processing. The Mediapipe outputs construct a "drum grid" of drum positions for each frame. Then, each limb is checked for "hitting" an object based on a sliding-window angle-calculation algorithm, to which the app responds with the appropriate sound sample.
 
-![MediaPipe Nodes](./assets/readme_images/app_screenshot.webp)
+<img src="./assets/readme_images/app_screenshot.webp" alt="Drumset App" width="300" height="200">
 
 ## Installation and Physical Setup
 
@@ -26,7 +26,7 @@ On startup, the drum kit audio is disabled. The app operates between three diffe
 
 **Mediapipe Solutions Pose Landmark Detection** detects 32 standard nodes from the human body. The source code configures these as shown:
 
-![MediaPipe Nodes](./assets/readme_images/Nodes_Edit.png)
+<img src="./assets/readme_images/Nodes_Edit.png" alt="MediaPipe Nodes" width="300" height="200">
 
 Further documentation on MediaPipe Pose may be found [here](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker).
 
@@ -34,13 +34,13 @@ Further documentation on MediaPipe Pose may be found [here](https://ai.google.de
 
 Each frame, Mediapipe returns the x, y, and visibility (0 - 1) parameters for each Pose node. These are saved alongside freshly-calculated values for all extremity angles and velocities. The "hit" algorithm reacts to spikes in angular or vertical velocity values for each extremity. In the code, the angles use the following degree plane:
 
-![Degree Circle](./assets/readme_images/hitAngles.jpg)
+<img src="./assets/readme_images/hitAngles.jpg" alt="Degree Circle" width="300" height="200">
 
 When a hit is registered, the program uses the extremity's location in frame and the "hit grid" below to map to a drum or cymbal. The grid ranges are recalculated each frame based on the user's hip and shoulder locations. This method allows for more accurate drum mapping regardless of the user's position in the frame.
 
 #### Drum Grid:
 
-![Drum Grid](./assets/readme_images/Grid_Diagram.png)
+<img src="./assets/readme_images/Grid_Diagram.png" alt="Drum Grid" width="300" height="200">
 
 All sound samples in this app are obtained from from ![Freesound.org](https://freesound.org/). These are free and open-source.
 
