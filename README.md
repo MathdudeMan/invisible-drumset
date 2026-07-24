@@ -1,11 +1,10 @@
 # Air Drumming Recognition Model
 
 <img
-    style="width: 50%;
-            align=center;
-            "
+    style="width: 50%;"
   src="./assets/readme_images/app_screenshot.webp" 
   alt="Drumset App" 
+    class="center"
 />
 
 Inspired by Rowan Atkinson's classic air drumming act, this air drumming model, packaged as a simple Python app, enables a user to play on their own invisible drum kit.
