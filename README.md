@@ -1,6 +1,7 @@
 # Air Drumming Recognition Model
 
 <img
+    style="width: 50%;"
   src="./assets/readme_images/app_screenshot.webp" 
   alt="Drumset App" 
 />
