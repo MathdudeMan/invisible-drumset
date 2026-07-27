@@ -8,7 +8,7 @@
 
 Inspired by Rowan Atkinson's classic air drumming act, this air drumming model, packaged as a simple Python app, enables a user to play on their own invisible drum kit.
 
-The app functions using Google's Mediapipe Solutions Pose Landmark Estimation as a base model, with OpenCV for pre-processing and post-processing. The Mediapipe outputs construct a "drum grid" of drum positions for each frame. Then, each limb is checked for "hitting" an object based on a sliding-window angle-calculation algorithm, to which the app responds with the appropriate sound sample.
+The app uses Google's MediaPipe Tasks Pose Landmarker as a base model, with OpenCV for pre-processing and post-processing. The MediaPipe outputs construct a "drum grid" of drum positions for each frame. Then, each limb is checked for "hitting" an object based on a sliding-window angle-calculation algorithm, to which the app responds with the appropriate sound sample.
 
 ## Installation and Physical Setup
 
@@ -26,9 +26,9 @@ On startup, the drum kit audio is disabled. The app operates between three diffe
 2. Power Off ('Off'): User onscreen, with audio inactive. Triggered automatically when user torso re-enters frame.
 3. Power On ('On'): User onscreen with audio activated. Triggered from the Off state by "hitting" the button in the top-left corner with a hand.
 
-### Mediapipe Pose Model
+### MediaPipe Pose Model
 
-**Mediapipe Solutions Pose Landmark Detection** detects 32 standard nodes from the human body. The source code configures these as shown:
+**MediaPipe Tasks Pose Landmarker** detects 33 standard nodes from the human body. The source code configures these as shown:
 
 <img
   style="display: block; 
