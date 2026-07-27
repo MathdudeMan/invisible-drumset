@@ -79,7 +79,7 @@ class DrumGrid:
         self.powButton.y1 *= self.endY
         self.powButton.y2 *= self.endY
 
-        self.audio_device = AudioDevice()
+        self.audio_device = AudioDevice(self.drum_sound_paths.values())
         self.sound_active = False
 
         self.hihat_open = False
