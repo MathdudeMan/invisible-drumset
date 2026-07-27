@@ -47,7 +47,7 @@ class DrumGrid:
         [Drums.BD, Drums.HAT],
     ]
 
-    assets_dir = os.path.join(os.getcwd(), "assets", "Used_Audio")
+    assets_dir = os.path.join(os.getcwd(), "assets", "samples")
     drum_sound_paths = {
         Drums.RIDE: os.path.join(assets_dir, "ride-acoustic02.wav"),
         Drums.TOM1: os.path.join(assets_dir, "tom-acoustic01.wav"),
